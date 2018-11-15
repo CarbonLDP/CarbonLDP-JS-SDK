@@ -8,7 +8,7 @@ import { BasicAuthenticator } from "./BasicAuthenticator";
 import { BasicCredentials } from "./BasicCredentials";
 import { BasicToken } from "./BasicToken";
 import { User } from "./User";
-import * as Roles from "./Roles";
+import { RolesEndpoint } from "./RolesEndpoint";
 import { TokenAuthenticator } from "./TokenAuthenticator";
 import {
 	TokenCredentials,
@@ -18,7 +18,7 @@ import { UsersEndpoint } from "./UsersEndpoint";
 
 export class AuthService {
 	public readonly users:UsersEndpoint;
-	public readonly roles:Roles.Class;
+	public readonly roles:RolesEndpoint;
 
 	protected readonly context:Context;
 	protected readonly authenticators:{ [P in AuthMethod]:Authenticator<object, object> };
@@ -39,7 +39,9 @@ export class AuthService {
 		this.users = context.documents.register( usersIRI );
 		UsersEndpoint.decorate( this.users, this.context.documents );
 
-		this.roles = new Roles.Class( context );
+		const rolesIRI:string = context._resolvePath( "system.security.roles" );
+		this.roles = context.documents.register( rolesIRI );
+		UsersEndpoint.decorate( this.roles, this.context.documents );
 
 		this.authenticators = {
 			[ AuthMethod.BASIC ]: new BasicAuthenticator( this.context ),

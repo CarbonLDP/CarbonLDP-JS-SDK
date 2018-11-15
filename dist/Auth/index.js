@@ -1,11 +1,4 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-}
 Object.defineProperty(exports, "__esModule", { value: true });
 var ACE_1 = require("./ACE");
 exports.TransientACE = ACE_1.TransientACE;
@@ -37,6 +30,11 @@ var ACL_2 = require("./ACL");
 exports.ACL = ACL_2.ACL;
 var User_1 = require("./User");
 exports.User = User_1.User;
+var Role_1 = require("./Role");
+exports.Role = Role_1.Role;
+exports.TransientRole = Role_1.TransientRole;
+var RolesEndpoint_1 = require("./RolesEndpoint");
+exports.RolesEndpoint = RolesEndpoint_1.RolesEndpoint;
 var TokenAuthenticator_1 = require("./TokenAuthenticator");
 exports.TokenAuthenticator = TokenAuthenticator_1.TokenAuthenticator;
 var TokenCredentials_1 = require("./TokenCredentials");
@@ -48,11 +46,5 @@ var UsernameAndPasswordCredentials_1 = require("./UsernameAndPasswordCredentials
 exports.UsernameAndPasswordCredentials = UsernameAndPasswordCredentials_1.UsernameAndPasswordCredentials;
 var UsersEndpoint_1 = require("./UsersEndpoint");
 exports.UsersEndpoint = UsersEndpoint_1.UsersEndpoint;
-var PersistedRole = __importStar(require("./PersistedRole"));
-exports.PersistedRole = PersistedRole;
-var Role = __importStar(require("./Role"));
-exports.Role = Role;
-var Roles = __importStar(require("./Roles"));
-exports.Roles = Roles;
 
 //# sourceMappingURL=index.js.map

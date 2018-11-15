@@ -13,6 +13,8 @@ export { LDAPCredentials } from "./LDAPCredentials";
 export { ACE } from "./ACE";
 export { ACL } from "./ACL";
 export { User } from "./User";
+export { BaseRole, Role, TransientRole } from "./Role";
+export { RolesEndpoint } from "./RolesEndpoint";
 export { TokenAuthenticator } from "./TokenAuthenticator";
 export { TokenCredentials, TokenCredentialsBase } from "./TokenCredentials";
 export { TransientUser, BaseUser } from "./User";
@@ -20,12 +22,3 @@ export { UsernameAndPasswordCredentials } from "./UsernameAndPasswordCredentials
 export { UsersEndpoint } from "./UsersEndpoint";
 
 
-import * as PersistedRole from "./PersistedRole";
-import * as Role from "./Role";
-import * as Roles from "./Roles";
-
-export {
-	PersistedRole,
-	Role,
-	Roles,
-};

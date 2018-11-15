@@ -1,10 +1,10 @@
-import * as Auth from "./Auth";
 import { ACE } from "./Auth/ACE";
 import { ACL } from "./Auth/ACL";
 import { AuthenticatedUserInformationAccessor } from "./Auth/AuthenticatedUserInformationAccessor";
 import { AuthenticatedUserMetadata } from "./Auth/AuthenticatedUserMetadata";
 import { CredentialsSet } from "./Auth/CredentialsSet";
 import { LDAPCredentials } from "./Auth/LDAPCredentials";
+import { Role } from "./Auth/Role";
 import { AuthService } from "./Auth/Service";
 import { TokenCredentials } from "./Auth/TokenCredentials";
 import { User } from "./Auth/User";
@@ -225,7 +225,7 @@ export class SDKContext implements Context {
 		this.extendObjectSchema( ResponseMetadata.TYPE, ResponseMetadata.SCHEMA );
 		this.extendObjectSchema( ValidationError.TYPE, ValidationError.SCHEMA );
 
-		this.extendObjectSchema( Auth.Role.RDF_CLASS, Auth.Role.SCHEMA );
+		this.extendObjectSchema( Role.TYPE, Role.SCHEMA );
 		this.extendObjectSchema( ACE.TYPE, ACE.SCHEMA );
 		this.extendObjectSchema( ACL.TYPE, ACL.SCHEMA );
 		this.extendObjectSchema( AuthenticatedUserInformationAccessor.TYPE, AuthenticatedUserInformationAccessor.SCHEMA );

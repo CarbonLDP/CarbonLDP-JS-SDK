@@ -5,14 +5,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Errors = __importStar(require("../Errors"));
 var Utils = __importStar(require("../Utils"));
 var AuthMethod_1 = require("./AuthMethod");
 var BasicAuthenticator_1 = require("./BasicAuthenticator");
 var BasicToken_1 = require("./BasicToken");
-var Roles = __importStar(require("./Roles"));
 var TokenAuthenticator_1 = require("./TokenAuthenticator");
 var TokenCredentials_1 = require("./TokenCredentials");
 var UsersEndpoint_1 = require("./UsersEndpoint");
@@ -22,7 +21,9 @@ var AuthService = (function () {
         var usersIRI = context._resolvePath("users");
         this.users = context.documents.register(usersIRI);
         UsersEndpoint_1.UsersEndpoint.decorate(this.users, this.context.documents);
-        this.roles = new Roles.Class(context);
+        var rolesIRI = context._resolvePath("system.security.roles");
+        this.roles = context.documents.register(rolesIRI);
+        UsersEndpoint_1.UsersEndpoint.decorate(this.roles, this.context.documents);
         this.authenticators = (_a = {},
             _a[AuthMethod_1.AuthMethod.BASIC] = new BasicAuthenticator_1.BasicAuthenticator(this.context),
             _a[AuthMethod_1.AuthMethod.TOKEN] = new TokenAuthenticator_1.TokenAuthenticator(this.context),

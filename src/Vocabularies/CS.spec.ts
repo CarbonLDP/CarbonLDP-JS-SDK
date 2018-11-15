@@ -307,10 +307,10 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 
 		it( hasProperty(
 			OBLIGATORY,
-			"childRole",
-			"https://carbonldp.com/ns/v1/security#childRole"
+			"child",
+			"https://carbonldp.com/ns/v1/security#child"
 		), ():void => {
-			const target:CS[ "childRole" ] = "https://carbonldp.com/ns/v1/security#childRole";
+			const target:CS[ "child" ] = "https://carbonldp.com/ns/v1/security#child";
 			expect( target ).toBeDefined();
 		} );
 
@@ -397,10 +397,10 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 
 		it( hasProperty(
 			OBLIGATORY,
-			"parentRole",
-			"https://carbonldp.com/ns/v1/security#parentRole"
+			"parent",
+			"https://carbonldp.com/ns/v1/security#parent"
 		), ():void => {
-			const target:CS[ "parentRole" ] = "https://carbonldp.com/ns/v1/security#parentRole";
+			const target:CS[ "parent" ] = "https://carbonldp.com/ns/v1/security#parent";
 			expect( target ).toBeDefined();
 		} );
 
@@ -419,6 +419,15 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 			"https://carbonldp.com/ns/v1/security#permission"
 		), ():void => {
 			const target:CS[ "permission" ] = "https://carbonldp.com/ns/v1/security#permission";
+			expect( target ).toBeDefined();
+		} );
+
+		it( hasProperty(
+			OBLIGATORY,
+			"role",
+			"https://carbonldp.com/ns/v1/security#role"
+		), ():void => {
+			const target:CS[ "role" ] = "https://carbonldp.com/ns/v1/security#role";
 			expect( target ).toBeDefined();
 		} );
 
@@ -500,7 +509,7 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 		} );
 
 		it( "should test all exported IRIs", ():void => {
-			expect( Object.keys( CS ).length ).toBe( 54 );
+			expect( Object.keys( CS ).length ).toBe( 55 );
 		} );
 
 		it( "CS.namespace", ():void => {
@@ -664,9 +673,9 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 			expect( CS.authenticatedUserMetadata ).toBe( "https://carbonldp.com/ns/v1/security#authenticatedUserMetadata" );
 		} );
 
-		it( "CS.childRole", ():void => {
-			expect( CS.childRole ).toEqual( jasmine.any( String ) );
-			expect( CS.childRole ).toBe( "https://carbonldp.com/ns/v1/security#childRole" );
+		it( "CS.child", ():void => {
+			expect( CS.child ).toEqual( jasmine.any( String ) );
+			expect( CS.child ).toBe( "https://carbonldp.com/ns/v1/security#child" );
 		} );
 
 		it( "CS.credentials", ():void => {
@@ -724,9 +733,9 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 			expect( CS.name ).toBe( "https://carbonldp.com/ns/v1/security#name" );
 		} );
 
-		it( "CS.parentRole", ():void => {
-			expect( CS.parentRole ).toEqual( jasmine.any( String ) );
-			expect( CS.parentRole ).toBe( "https://carbonldp.com/ns/v1/security#parentRole" );
+		it( "CS.parent", ():void => {
+			expect( CS.parent ).toEqual( jasmine.any( String ) );
+			expect( CS.parent ).toBe( "https://carbonldp.com/ns/v1/security#parent" );
 		} );
 
 		it( "CS.password", ():void => {
@@ -737,6 +746,11 @@ describe( module( "carbonldp/Vocabularies/CS" ), ():void => {
 		it( "CS.permission", ():void => {
 			expect( CS.permission ).toEqual( jasmine.any( String ) );
 			expect( CS.permission ).toBe( "https://carbonldp.com/ns/v1/security#permission" );
+		} );
+
+		it( "CS.role", ():void => {
+			expect( CS.role ).toEqual( jasmine.any( String ) );
+			expect( CS.role ).toBe( "https://carbonldp.com/ns/v1/security#role" );
 		} );
 
 		it( "CS.rootContainer", ():void => {

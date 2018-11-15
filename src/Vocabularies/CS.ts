@@ -33,7 +33,7 @@ export interface CS {
 	allowsOrigin:"https://carbonldp.com/ns/v1/security#allowsOrigin";
 	authenticatedUserMetadata:"https://carbonldp.com/ns/v1/security#authenticatedUserMetadata";
 	authToken:"https://carbonldp.com/ns/v1/security#authToken";
-	childRole:"https://carbonldp.com/ns/v1/security#childRole";
+	child:"https://carbonldp.com/ns/v1/security#child";
 	credentials:"https://carbonldp.com/ns/v1/security#credentials";
 	credentialsOf:"https://carbonldp.com/ns/v1/security#credentialsOf";
 	description:"https://carbonldp.com/ns/v1/security#description";
@@ -45,9 +45,10 @@ export interface CS {
 	ldapServer:"https://carbonldp.com/ns/v1/security#ldapServer";
 	ldapUserDN:"https://carbonldp.com/ns/v1/security#ldapUserDN";
 	name:"https://carbonldp.com/ns/v1/security#name";
-	parentRole:"https://carbonldp.com/ns/v1/security#parentRole";
+	parent:"https://carbonldp.com/ns/v1/security#parent";
 	password:"https://carbonldp.com/ns/v1/security#password";
 	permission:"https://carbonldp.com/ns/v1/security#permission";
+	role:"https://carbonldp.com/ns/v1/security#role";
 	rootContainer:"https://carbonldp.com/ns/v1/security#rootContainer";
 	subject:"https://carbonldp.com/ns/v1/security#subject";
 	subjectClass:"https://carbonldp.com/ns/v1/security#subjectClass";
@@ -92,7 +93,7 @@ export const CS:CS = {
 	allowsOrigin: "https://carbonldp.com/ns/v1/security#allowsOrigin",
 	authToken: "https://carbonldp.com/ns/v1/security#authToken",
 	authenticatedUserMetadata: "https://carbonldp.com/ns/v1/security#authenticatedUserMetadata",
-	childRole: "https://carbonldp.com/ns/v1/security#childRole",
+	child: "https://carbonldp.com/ns/v1/security#child",
 	credentials: "https://carbonldp.com/ns/v1/security#credentials",
 	credentialsOf: "https://carbonldp.com/ns/v1/security#credentialsOf",
 	description: "https://carbonldp.com/ns/v1/security#description",
@@ -104,9 +105,10 @@ export const CS:CS = {
 	ldapServer: "https://carbonldp.com/ns/v1/security#ldapServer",
 	ldapUserDN: "https://carbonldp.com/ns/v1/security#ldapUserDN",
 	name: "https://carbonldp.com/ns/v1/security#name",
-	parentRole: "https://carbonldp.com/ns/v1/security#parentRole",
+	parent: "https://carbonldp.com/ns/v1/security#parent",
 	password: "https://carbonldp.com/ns/v1/security#password",
 	permission: "https://carbonldp.com/ns/v1/security#permission",
+	role: "https://carbonldp.com/ns/v1/security#role",
 	rootContainer: "https://carbonldp.com/ns/v1/security#rootContainer",
 	subject: "https://carbonldp.com/ns/v1/security#subject",
 	subjectClass: "https://carbonldp.com/ns/v1/security#subjectClass",

@@ -5,7 +5,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Fragment_1 = require("../Fragment");
 var HTTP_1 = require("../HTTP");
@@ -38,11 +38,11 @@ exports.Document = {
         },
         "isMemberOfRelation": {
             "@id": Vocabularies_1.LDP.isMemberOfRelation,
-            "@type": "@id",
+            "@type": "@vocab",
         },
         "hasMemberRelation": {
             "@id": Vocabularies_1.LDP.hasMemberRelation,
-            "@type": "@id",
+            "@type": "@vocab",
         },
         "insertedContentRelation": {
             "@id": Vocabularies_1.LDP.insertedContentRelation,

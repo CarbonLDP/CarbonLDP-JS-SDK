@@ -5,7 +5,7 @@ export interface PlatformPaths {
 }
 
 export interface DocumentPaths extends PlatformPaths {
-	slug:string;
+	slug?:string;
 }
 
 export interface ContextSettings extends PlatformPaths {

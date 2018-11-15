@@ -224,11 +224,11 @@ export const Document:DocumentFactory = {
 		},
 		"isMemberOfRelation": {
 			"@id": LDP.isMemberOfRelation,
-			"@type": "@id",
+			"@type": "@vocab",
 		},
 		"hasMemberRelation": {
 			"@id": LDP.hasMemberRelation,
-			"@type": "@id",
+			"@type": "@vocab",
 		},
 		"insertedContentRelation": {
 			"@id": LDP.insertedContentRelation,

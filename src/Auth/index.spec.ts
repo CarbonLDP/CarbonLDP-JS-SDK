@@ -8,8 +8,8 @@ import * as Utils from "../Utils";
 
 import * as Auth from "./";
 
-import { TransientACE } from "./ACE";
-import { TransientACL } from "./ACL";
+import { ACE, TransientACE } from "./ACE";
+import { ACL, TransientACL } from "./ACL";
 import { AuthenticatedUserInformationAccessor } from "./AuthenticatedUserInformationAccessor";
 import { AuthenticatedUserMetadata } from "./AuthenticatedUserMetadata";
 import { Authenticator } from "./Authenticator";
@@ -19,19 +19,12 @@ import { BasicCredentials } from "./BasicCredentials";
 import { BasicToken } from "./BasicToken";
 import { CredentialsSet } from "./CredentialsSet";
 import { LDAPCredentials } from "./LDAPCredentials";
-import { ACE } from "./ACE";
-import { ACL } from "./ACL";
-import * as PersistedRole from "./PersistedRole";
-import { User } from "./User";
-import * as Role from "./Role";
-import * as Roles from "./Roles";
+import { Role, TransientRole } from "./Role";
+import { RolesEndpoint } from "./RolesEndpoint";
 import { AuthService } from "./Service";
 import { TokenAuthenticator } from "./TokenAuthenticator";
-import {
-	TokenCredentials,
-	TokenCredentialsBase,
-} from "./TokenCredentials";
-import { TransientUser } from "./User";
+import { TokenCredentials, TokenCredentialsBase, } from "./TokenCredentials";
+import { TransientUser, User } from "./User";
 import { UsernameAndPasswordCredentials } from "./UsernameAndPasswordCredentials";
 import { UsersEndpoint } from "./UsersEndpoint";
 
@@ -197,15 +190,6 @@ describe( module( "carbonldp/Auth" ), ():void => {
 
 	it( reexports(
 		STATIC,
-		"PersistedRole",
-		"carbonldp/Auth/PersistedRole"
-	), ():void => {
-		expect( Auth.PersistedRole ).toBeDefined();
-		expect( Auth.PersistedRole ).toBe( PersistedRole );
-	} );
-
-	it( reexports(
-		STATIC,
 		"Role",
 		"carbonldp/Auth/Role"
 	), ():void => {
@@ -215,11 +199,20 @@ describe( module( "carbonldp/Auth" ), ():void => {
 
 	it( reexports(
 		STATIC,
-		"Roles",
-		"carbonldp/Auth/Roles"
+		"TransientRole",
+		"CarbonLDP.Auth.TransientRole"
 	), ():void => {
-		expect( Auth.Roles ).toBeDefined();
-		expect( Auth.Roles ).toBe( Roles );
+		expect( Auth.TransientRole ).toBeDefined();
+		expect( Auth.TransientRole ).toBe( TransientRole );
+	} );
+
+	it( reexports(
+		STATIC,
+		"RolesEndpoint",
+		"carbonldp/Auth/RolesEndpoint"
+	), ():void => {
+		expect( Auth.RolesEndpoint ).toBeDefined();
+		expect( Auth.RolesEndpoint ).toBe( RolesEndpoint );
 	} );
 
 	it( reexports(

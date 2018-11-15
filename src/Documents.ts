@@ -19,6 +19,7 @@ import {
 	} from "./AccessPoint";
 import * as Auth from "./Auth";
 import { ACL } from "./Auth/ACL";
+import { TransientRole } from "./Auth/Role/TransientRole";
 import { User } from "./Auth/User";
 import { CarbonLDP } from "./CarbonLDP";
 import { Context } from "./Context";
@@ -154,7 +155,6 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 				.set( ProtectedDocument.TYPE, ProtectedDocument.decorate )
 				.set( User.TYPE, User.decorate )
 				.set( ACL.TYPE, ACL.decorate )
-				.set( Auth.Role.RDF_CLASS, Auth.PersistedRole.Factory.decorate )
 			;
 		}
 
@@ -1177,7 +1177,6 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 
 		if( document.id ) {
 			let childURI:string = document.id;
-			if( ! ! this.context ) childURI = this.context.resolve( childURI );
 			if( ! URI.isBaseOf( parentURI, childURI ) ) {
 				return Promise.reject( new Errors.IllegalArgumentError( "The document's URI is not relative to the parentURI specified" ) );
 			}

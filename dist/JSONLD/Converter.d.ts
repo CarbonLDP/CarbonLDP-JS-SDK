@@ -15,12 +15,12 @@ export declare class JSONLDConverter {
     expand(compactedObject: Object, generalSchema: ObjectSchema.DigestedObjectSchema, digestedSchema: ObjectSchema.DigestedObjectSchema): RDFNode;
     private expandSingle(compactedObject, generalSchema, digestedSchema);
     private expandProperty(propertyName, propertyValue, digestedSchema, generalSchema);
-    private expandPropertyValue(propertyValue, digestedSchema, generalSchema);
-    private expandPropertyPointer(propertyValue, digestedSchema, generalSchema);
+    private expandPropertyValue(propertyValue, digestedSchema, generalSchema, definition?);
+    private expandPropertyPointer(propertyValue, digestedSchema, generalSchema, definition?);
     private expandPropertyLiteral(propertyValue, definition, digestedSchema);
     private expandPropertyLanguageMap(propertyValue);
-    private expandPointerValue(propertyValue, digestedSchema, generalSchema);
-    private expandValue(propertyValue, digestedSchema, generalSchema);
+    private expandPointerValue(propertyValue, digestedSchema, generalSchema, definition?);
+    private expandValue(propertyValue, digestedSchema, generalSchema, definition?);
     private expandLiteralValue(literalValue, literalType);
     private compactSingle(expandedObject, targetObject, digestedSchema, pointerLibrary, strict?);
     private getPropertyContainerType(propertyValues);

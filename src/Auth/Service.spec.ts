@@ -6,8 +6,7 @@ import {
 
 import { Context } from "../Context";
 import { IllegalArgumentError } from "../Errors";
-import { RequestOptions } from "../HTTP/Request";
-import { Document } from "../Document";
+import { RequestOptions } from "../HTTP";
 import {
 	clazz,
 	constructor,
@@ -25,13 +24,12 @@ import { CS } from "../Vocabularies/CS";
 import { XSD } from "../Vocabularies/XSD";
 import { Authenticator } from "./Authenticator";
 import { AuthMethod } from "./AuthMethod";
-import { User } from "./User";
-import * as Roles from "./Roles";
+import { RolesEndpoint } from "./RolesEndpoint";
 
 import { AuthService } from "./Service";
 
 import { TokenCredentials } from "./TokenCredentials";
-import { TransientUser } from "./User";
+import { User } from "./User";
 import { UsersEndpoint } from "./UsersEndpoint";
 
 
@@ -80,14 +78,29 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 				} ) );
 			} );
 
+			it( "should assign RolesEndpoint in roles", ():void => {
+				const auth:AuthService = new AuthService( context );
+
+				expect( auth.users ).toEqual( anyThatMatches( RolesEndpoint.is, "RolesEndpoint" ) as any );
+				expect( auth.users ).toEqual( jasmine.objectContaining( {
+					id: "https://example.com/users/",
+				} ) );
+			} );
+
 		} );
 
-		// TODO: Move to constructor tests
 		it( hasProperty(
 			INSTANCE,
 			"users",
 			"CarbonLDP.Auth.UsersEndpoint",
 			"Instance of `CarbonLDP.Auth.UsersEndpoint` that helps managing the users of your Carbon LDP."
+		), ():void => {} );
+
+		it( hasProperty(
+			INSTANCE,
+			"roles",
+			"CarbonLDP.Auth.RolesEndpoint",
+			"Instance of `CarbonLDP.Auth.RolesEndpoint` that helps managing the roles of your Carbon LDP."
 		), ():void => {} );
 
 		// TODO: Separate in different tests
@@ -106,13 +119,13 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 
 			(() => {
 				// Authenticated Auth
-				let auth:AuthService = createMockAuthService( context, { user: true } );
+				let auth:AuthService = createMockAuthService( { context, user: true } );
 				expect( auth.authenticatedUser ).toBeTruthy();
 				expect( User.is( auth.authenticatedUser ) ).toBe( true );
 			})();
 
 			(() => {
-				context.auth = createMockAuthService( context, { user: true } );
+				context.auth = createMockAuthService( { context, user: true } );
 
 				let contextWithParent:Context = createMockContext( { parentContext: context, auth: true } );
 
@@ -126,10 +139,10 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 			})();
 
 			(() => {
-				context.auth = createMockAuthService( context, { user: true } );
+				context.auth = createMockAuthService( { context, user: true } );
 
 				let childContext:Context = createMockContext( { parentContext: context } );
-				childContext.auth = createMockAuthService( childContext, { user: true } );
+				childContext.auth = createMockAuthService( { context: childContext, user: true } );
 
 				expect( context.auth.authenticatedUser ).toBeTruthy();
 				expect( User.is( context.auth.authenticatedUser ) ).toBe( true );
@@ -140,19 +153,6 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 				expect( context.auth.authenticatedUser ).not.toBe( childContext.auth.authenticatedUser );
 			})();
 
-		} );
-
-		// TODO: Move to constructor tests
-		it( hasProperty(
-			INSTANCE,
-			"roles",
-			"CarbonLDP.Auth.Roles.Class",
-			"Instance of `CarbonLDP.Auth.Roles.Class` that helps managing the roles of your Carbon LDP."
-		), ():void => {
-			let auth:AuthService = new AuthService( context );
-
-			expect( auth.roles ).toBeDefined();
-			expect( auth.roles ).toEqual( jasmine.any( Roles.Class ) );
 		} );
 
 		// TODO: Separate in different tests
@@ -218,12 +218,12 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 
 			// Current and parent authenticated
 			(():void => {
-				context.auth = createMockAuthService( context );
+				context.auth = createMockAuthService( { context } );
 				const spyParent:jasmine.Spy = spyOn( context.auth, "isAuthenticated" ).and.returnValue( true );
 
 				const authenticator:jasmine.SpyObj<Authenticator<{}, {}>> = jasmine.createSpyObj( "Authenticator", { isAuthenticated: true } );
 				const subContext:Context = createMockContext( { parentContext: context } );
-				const auth:AuthService = createMockAuthService( subContext, { authenticator: authenticator } );
+				const auth:AuthService = createMockAuthService( { context: subContext, authenticator: authenticator } );
 
 				expect( auth.isAuthenticated() ).toBe( true );
 				expect( spyParent ).not.toHaveBeenCalled();
@@ -239,12 +239,12 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 
 			// Current authenticated but parent not
 			(():void => {
-				context.auth = createMockAuthService( context );
+				context.auth = createMockAuthService( { context } );
 				const spyParent:jasmine.Spy = spyOn( context.auth, "isAuthenticated" ).and.returnValue( false );
 
 				const subContext:Context = createMockContext( { parentContext: context } );
 				const authenticator:jasmine.SpyObj<Authenticator<{}, {}>> = jasmine.createSpyObj( "Authenticator", { isAuthenticated: true } );
-				const auth:AuthService = createMockAuthService( subContext, { authenticator } );
+				const auth:AuthService = createMockAuthService( { context: subContext, authenticator } );
 
 				expect( auth.isAuthenticated() ).toBe( true );
 				expect( spyParent ).not.toHaveBeenCalled();
@@ -384,7 +384,7 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 							expect( auth.authenticatedUser ).toBeDefined();
 							expect( auth.authenticatedUser ).toEqual( jasmine.objectContaining( {
 								_resolved: false,
-								types: jasmine.arrayContaining( [ TransientUser.TYPE ] ) as any,
+								types: jasmine.arrayContaining( [ User.TYPE ] ) as any,
 							} ) );
 
 							done();
@@ -465,7 +465,7 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 							expect( auth.authenticatedUser ).toBeDefined();
 							expect( auth.authenticatedUser ).toEqual( jasmine.objectContaining( {
 								_resolved: false,
-								types: jasmine.arrayContaining( [ TransientUser.TYPE ] ) as any,
+								types: jasmine.arrayContaining( [ User.TYPE ] ) as any,
 							} ) );
 
 							done();
@@ -523,7 +523,7 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 							expect( auth.authenticatedUser ).toBeDefined();
 							expect( auth.authenticatedUser ).toEqual( jasmine.objectContaining( {
 								_resolved: false,
-								types: jasmine.arrayContaining( [ TransientUser.TYPE ] ) as any,
+								types: jasmine.arrayContaining( [ User.TYPE ] ) as any,
 							} ) );
 
 							done();

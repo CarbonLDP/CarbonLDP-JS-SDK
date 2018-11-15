@@ -355,7 +355,7 @@
 
 		} );
 
-		describe( "When Users", () => {
+		xdescribe( "When Users", () => {
 			let user;
 
 			it( "should register user", async () => {
@@ -456,6 +456,43 @@
 			afterAll( async () => {
 				if( ! user ) return;
 				await app.documents.delete( user.id );
+			} );
+
+		} );
+
+		describe( "When Roles", () => {
+
+			let role;
+			afterEach( async () => {
+				if( role ) await role.delete();
+			} );
+
+			it( "should create role with parent string", async () => {
+				role = await app.auth.roles
+					.createChild( CarbonLDP.Auth.Role.create( {
+						id: "test-role/",
+						name: "TestRole",
+						description: "Test role",
+						parent: ".system/security/roles/system-admins/",
+					} ) );
+
+				console.log( role );
+				expect( role ).toBeDefined();
+				expect( CarbonLDP.Auth.Role.is( role ) ).toBe( true );
+			} );
+
+			it( "should create role with parent pointer", async () => {
+				role = await app.auth.roles
+					.createChild( CarbonLDP.Auth.Role.create( {
+						id: "test-role/",
+						name: "TestRole",
+						description: "Test role",
+						parent: app.auth.roles.getPointer( ".system/security/roles/system-admins/" ),
+					} ) );
+
+				console.log( role );
+				expect( role ).toBeDefined();
+				expect( CarbonLDP.Auth.Role.is( role ) ).toBe( true );
 			} );
 
 		} );

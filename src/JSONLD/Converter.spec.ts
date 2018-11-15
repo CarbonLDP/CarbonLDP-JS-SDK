@@ -273,6 +273,7 @@ describe( module( "carbonldp/JSONLD/Converter" ), ():void => {
 				expect( Utils.isFunction( jsonldConverter.compact ) ).toBeDefined();
 
 				let generalSchema:ObjectSchema.ObjectSchema = {
+					"@base": "http://example.com/",
 					"@vocab": "http://example.com/my-vocabulary#",
 					"ex": "http://example.com/ns#",
 					"xsd": "http://www.w3.org/2001/XMLSchema#",
@@ -338,7 +339,7 @@ describe( module( "carbonldp/JSONLD/Converter" ), ():void => {
 					},
 					"vocabPointer": {
 						"@id": "ex:vocab-pointer",
-						"@type": "@id",
+						"@type": "@vocab",
 					},
 					"relativePointer": {
 						"@id": "ex:relative-pointer",
@@ -564,7 +565,7 @@ describe( module( "carbonldp/JSONLD/Converter" ), ():void => {
 
 				expect( expandedObject[ "http://example.com/ns#relative-pointer" ] ).toBeDefined();
 				expect( expandedObject[ "http://example.com/ns#relative-pointer" ] ).toEqual( [ {
-					"@id": "relative-pointer/",
+					"@id": "http://example.com/relative-pointer/",
 				} ] );
 
 				expect( expandedObject[ "http://example.com/my-vocabulary#elementWithoutID" ] ).toBeDefined();

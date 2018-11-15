@@ -4,12 +4,12 @@ import { Authenticator } from "./Authenticator";
 import { AuthMethod } from "./AuthMethod";
 import { BasicCredentials } from "./BasicCredentials";
 import { User } from "./User";
-import * as Roles from "./Roles";
+import { RolesEndpoint } from "./RolesEndpoint";
 import { TokenCredentials, TokenCredentialsBase } from "./TokenCredentials";
 import { UsersEndpoint } from "./UsersEndpoint";
 export declare class AuthService {
     readonly users: UsersEndpoint;
-    readonly roles: Roles.Class;
+    readonly roles: RolesEndpoint;
     protected readonly context: Context;
     protected readonly authenticators: {
         [P in AuthMethod]: Authenticator<object, object>;

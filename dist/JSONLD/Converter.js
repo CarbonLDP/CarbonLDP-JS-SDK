@@ -5,7 +5,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var IllegalArgumentError_1 = require("../Errors/IllegalArgumentError");
 var Pointer_1 = require("../Pointer");
@@ -15,6 +15,7 @@ var Node_1 = require("../RDF/Node");
 var URI_1 = require("../RDF/URI");
 var XSD_1 = require("../Vocabularies/XSD");
 var ObjectSchema = __importStar(require("./../ObjectSchema"));
+var ObjectSchema_1 = require("./../ObjectSchema");
 var Utils = __importStar(require("./../Utils"));
 var Utils_1 = require("./Utils");
 var JSONLDConverter = (function () {
@@ -95,8 +96,8 @@ var JSONLDConverter = (function () {
         var expandedValues = propertyType === true ?
             this.expandPropertyLiteral(propertyValue, definition, digestedSchema) :
             propertyType === false ?
-                this.expandPropertyPointer(propertyValue, digestedSchema, generalSchema) :
-                this.expandPropertyValue(propertyValue, digestedSchema, generalSchema);
+                this.expandPropertyPointer(propertyValue, digestedSchema, generalSchema, definition) :
+                this.expandPropertyValue(propertyValue, digestedSchema, generalSchema, definition);
         var filteredValues = expandedValues.filter(function (value) { return value !== null; });
         if (!filteredValues.length)
             return null;
@@ -106,13 +107,13 @@ var JSONLDConverter = (function () {
             ];
         return filteredValues;
     };
-    JSONLDConverter.prototype.expandPropertyValue = function (propertyValue, digestedSchema, generalSchema) {
+    JSONLDConverter.prototype.expandPropertyValue = function (propertyValue, digestedSchema, generalSchema, definition) {
         var _this = this;
-        return propertyValue.map(function (value) { return _this.expandValue(value, digestedSchema, generalSchema); });
+        return propertyValue.map(function (value) { return _this.expandValue(value, digestedSchema, generalSchema, definition); });
     };
-    JSONLDConverter.prototype.expandPropertyPointer = function (propertyValue, digestedSchema, generalSchema) {
+    JSONLDConverter.prototype.expandPropertyPointer = function (propertyValue, digestedSchema, generalSchema, definition) {
         var _this = this;
-        return propertyValue.map(function (value) { return _this.expandPointerValue(value, digestedSchema, generalSchema); });
+        return propertyValue.map(function (value) { return _this.expandPointerValue(value, digestedSchema, generalSchema, definition); });
     };
     JSONLDConverter.prototype.expandPropertyLiteral = function (propertyValue, definition, digestedSchema) {
         var _this = this;
@@ -134,7 +135,7 @@ var JSONLDConverter = (function () {
         });
         return mapValues;
     };
-    JSONLDConverter.prototype.expandPointerValue = function (propertyValue, digestedSchema, generalSchema) {
+    JSONLDConverter.prototype.expandPointerValue = function (propertyValue, digestedSchema, generalSchema, definition) {
         var isString = Utils.isString(propertyValue);
         var id = Pointer_1.Pointer.is(propertyValue) ?
             propertyValue.id :
@@ -143,14 +144,17 @@ var JSONLDConverter = (function () {
                 null;
         if (!id)
             return null;
-        var resolved = ObjectSchema.ObjectSchemaUtils.resolveURI(id, generalSchema, { vocab: isString, base: true });
+        var relativeTo = definition ?
+            definition.pointerType === ObjectSchema_1.PointerType.VOCAB ? { vocab: true } : { base: true } :
+            isString ? { vocab: true } : {};
+        var resolved = ObjectSchema.ObjectSchemaUtils.resolveURI(id, generalSchema, relativeTo);
         return { "@id": resolved };
     };
-    JSONLDConverter.prototype.expandValue = function (propertyValue, digestedSchema, generalSchema) {
+    JSONLDConverter.prototype.expandValue = function (propertyValue, digestedSchema, generalSchema, definition) {
         if (Utils.isArray(propertyValue))
             return null;
         return Pointer_1.Pointer.is(propertyValue) ?
-            this.expandPointerValue(propertyValue, generalSchema, digestedSchema) :
+            this.expandPointerValue(propertyValue, generalSchema, digestedSchema, definition) :
             this.expandLiteralValue(propertyValue, Utils_1.guessXSDType(propertyValue));
     };
     JSONLDConverter.prototype.expandLiteralValue = function (literalValue, literalType) {

@@ -1,5 +1,6 @@
 import { Documents } from "../../Documents";
 import { ObjectSchema } from "../../ObjectSchema";
+import { Pointer } from "../../Pointer";
 import { ProtectedDocument } from "../../ProtectedDocument";
 import {
 	CS,
@@ -15,6 +16,7 @@ import {
 export interface User extends ProtectedDocument {
 	name?:string;
 	credentials?:UsernameAndPasswordCredentials;
+	roles?:Pointer[];
 
 	updateCredentials( username?:string, password?:string ):UsernameAndPasswordCredentials;
 }
@@ -43,6 +45,11 @@ export const User:UserFactory = {
 		"credentials": {
 			"@id": CS.credentials,
 			"@type": "@id",
+		},
+		"roles": {
+			"@id": CS.role,
+			"@type": "@id",
+			"@container": "@set",
 		},
 	},
 

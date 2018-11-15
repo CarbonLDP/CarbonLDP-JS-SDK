@@ -14,6 +14,11 @@ exports.User = {
             "@id": Vocabularies_1.CS.credentials,
             "@type": "@id",
         },
+        "roles": {
+            "@id": Vocabularies_1.CS.role,
+            "@type": "@id",
+            "@container": "@set",
+        },
     },
     isDecorated: function (object) {
         return ProtectedDocument_1.ProtectedDocument.isDecorated(object)

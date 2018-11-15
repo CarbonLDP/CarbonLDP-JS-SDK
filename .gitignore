@@ -10,8 +10,8 @@ src/**/*.map
 test/jasmine-ajax-node/*.js
 test/jasmine-ajax-node/*.map
 
-test/helpers/*.js
-test/helpers/*.map
+test/helpers/**/*.js
+test/helpers/**/*.map
 
 # JSPM
 **/jspm_packages/

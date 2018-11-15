@@ -15,7 +15,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var iri_1 = require("sparqler/iri");
 var AbstractContext_1 = require("./AbstractContext");
@@ -60,8 +60,13 @@ var CarbonLDP = (function (_super) {
                     slug: ".system/",
                     paths: {
                         platform: "platform/",
-                        credentials: "credentials/",
-                        roles: "roles/",
+                        security: {
+                            slug: "security/",
+                            paths: {
+                                credentials: "credentials/",
+                                roles: "roles/",
+                            },
+                        },
                     },
                 },
                 users: {

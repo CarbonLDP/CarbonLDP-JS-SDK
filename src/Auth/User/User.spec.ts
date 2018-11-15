@@ -1,5 +1,7 @@
-import { StrictMinus } from "../../../test/helpers/types";
-import { AbstractContext } from "../../AbstractContext";
+import {
+	AnyJasmineValue,
+	StrictMinus
+} from "../../../test/helpers/types";
 import { Pointer } from "../../Pointer";
 import { ProtectedDocument } from "../../ProtectedDocument";
 import {
@@ -11,6 +13,7 @@ import {
 	method,
 	module,
 	OBLIGATORY,
+	OPTIONAL,
 	property,
 	STATIC,
 } from "../../test/JasmineExtender";
@@ -31,21 +34,27 @@ describe( module( "carbonldp/Auth/User" ), ():void => {
 		"Interface that represents the base of a persisted User in any context."
 	), ():void => {
 
-		it( extendsClass( "CarbonLDP.Auth.TransientUser" ), ():void => {} );
 		it( extendsClass( "CarbonLDP.ProtectedDocument" ), ():void => {} );
 
-		let context:AbstractContext;
-		let persistedUser:User;
-		beforeEach( ():void => {
-			context = new class extends AbstractContext {
-				protected _baseURI:string = "https://example.com/";
-			};
 
-			const pointerUser:Pointer = context.documents.getPointer( "https://example.com/resource/" );
-			persistedUser = User.decorate(
-				Object.assign( pointerUser, {} ),
-				context.documents
-			);
+		it( hasProperty(
+			OPTIONAL,
+			"name",
+			"string",
+			"Optional name of the user."
+		), ():void => {
+			const target:User[ "name" ] = "name";
+			expect( target ).toBeDefined();
+		} );
+
+		it( hasProperty(
+			OPTIONAL,
+			"roles",
+			"CarbonLDP.Pointer[]",
+			"Array of the roles assigned to the current user."
+		), ():void => {
+			const target:User[ "roles" ] = [] as Pointer[];
+			expect( target ).toBeDefined();
 		} );
 
 	} );
@@ -61,11 +70,50 @@ describe( module( "carbonldp/Auth/User" ), ():void => {
 			"CarbonLDP.Vocabularies.CS.User"
 		), ():void => {} );
 
-		it( hasProperty(
+		describe( property(
 			OBLIGATORY,
 			"SCHEMA",
 			"CarbonLDP.ObjectSchema"
-		), ():void => {} );
+		), ():void => {
+
+			it( "should exists", () => {
+				expect( User.SCHEMA ).toBeDefined();
+				expect( Utils.isObject( User.SCHEMA ) ).toBe( true );
+			} );
+
+			it( "should has interface properties", () => {
+				type Target = Required<AnyJasmineValue<Pick<TransientUser & User, "name" | "credentials" | "roles">>>;
+
+				expect( User.SCHEMA as Target ).toEqual( {
+					name: jasmine.any( Object ),
+					credentials: jasmine.any( Object ),
+					roles: jasmine.any( Object ),
+				} );
+			} );
+
+			it( "should has property name", () => {
+				expect( User.SCHEMA[ "name" ] ).toEqual( {
+					"@id": CS.name,
+					"@type": XSD.string,
+				} );
+			} );
+
+			it( "should has property credentials", () => {
+				expect( User.SCHEMA[ "credentials" ] ).toEqual( {
+					"@id": CS.credentials,
+					"@type": "@id",
+				} );
+			} );
+
+			it( "should has property roles", () => {
+				expect( User.SCHEMA[ "roles" ] ).toEqual( {
+					"@id": CS.role,
+					"@type": "@id",
+					"@container": "@set",
+				} );
+			} );
+
+		} );
 
 		describe( method( OBLIGATORY, "isDecorated" ), ():void => {
 
@@ -123,18 +171,6 @@ describe( module( "carbonldp/Auth/User" ), ():void => {
 			expect( Utils.isString( User.TYPE ) ).toBe( true );
 
 			expect( User.TYPE ).toBe( CS.User );
-		} );
-
-		// TODO: Separate in different test
-		it( "User.SCHEMA", ():void => {
-			expect( User.SCHEMA ).toBeDefined();
-			expect( Utils.isObject( User.SCHEMA ) ).toBe( true );
-
-			expect( Utils.hasProperty( User.SCHEMA, "name" ) ).toBe( true );
-			expect( User.SCHEMA[ "name" ] ).toEqual( {
-				"@id": CS.name,
-				"@type": XSD.string,
-			} );
 		} );
 
 		describe( "User.is", ():void => {

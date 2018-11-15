@@ -13,14 +13,12 @@ import {
 	method,
 	module,
 	OBLIGATORY,
+	OPTIONAL,
 	property,
 	STATIC,
 } from "../../test/JasmineExtender";
 import * as Utils from "../../Utils";
-import {
-	CS,
-	XSD
-} from "../../Vocabularies";
+import { CS } from "../../Vocabularies";
 import { UsernameAndPasswordCredentials } from "../UsernameAndPasswordCredentials";
 import { BaseUser } from "./BaseUser";
 import { TransientUser } from "./TransientUser";
@@ -42,16 +40,13 @@ describe( module( "carbonldp/Auth/TransientUser" ), ():void => {
 		} );
 
 		it( hasProperty(
-			OBLIGATORY,
+			OPTIONAL,
 			"name",
 			"string",
-			"The name of the user."
+			"Optional name of the user."
 		), ():void => {
-			let name:string = "A name";
-			let user:TransientUser = <any> {};
-
-			user.name = name;
-			expect( user.name ).toEqual( jasmine.any( String ) );
+			const target:TransientUser[ "name" ] = "name";
+			expect( target ).toBeDefined();
 		} );
 
 		it( hasProperty(

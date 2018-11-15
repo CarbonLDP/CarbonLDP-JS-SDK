@@ -10,6 +10,10 @@ import { RDFNode } from "../RDF/Node";
 import { URI } from "../RDF/URI";
 import { XSD } from "../Vocabularies/XSD";
 import * as ObjectSchema from "./../ObjectSchema";
+import {
+	DigestedObjectSchemaProperty,
+	PointerType
+} from "./../ObjectSchema";
 import * as Utils from "./../Utils";
 import { guessXSDType } from "./Utils";
 
@@ -106,8 +110,8 @@ export class JSONLDConverter {
 		const expandedValues:any[] = propertyType === true ?
 			this.expandPropertyLiteral( propertyValue, definition, digestedSchema ) :
 			propertyType === false ?
-				this.expandPropertyPointer( propertyValue, digestedSchema, generalSchema ) :
-				this.expandPropertyValue( propertyValue, digestedSchema, generalSchema )
+				this.expandPropertyPointer( propertyValue, digestedSchema, generalSchema, definition ) :
+				this.expandPropertyValue( propertyValue, digestedSchema, generalSchema, definition )
 		;
 
 		const filteredValues:any[] = expandedValues.filter( value => value !== null );
@@ -120,12 +124,12 @@ export class JSONLDConverter {
 		return filteredValues;
 	}
 
-	private expandPropertyValue( propertyValue:any[], digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema ):any[] {
-		return propertyValue.map( value => this.expandValue( value, digestedSchema, generalSchema ) );
+	private expandPropertyValue( propertyValue:any[], digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema, definition?:DigestedObjectSchemaProperty ):any[] {
+		return propertyValue.map( value => this.expandValue( value, digestedSchema, generalSchema, definition ) );
 	}
 
-	private expandPropertyPointer( propertyValue:any[], digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema ):any[] {
-		return propertyValue.map( value => this.expandPointerValue( value, digestedSchema, generalSchema ) );
+	private expandPropertyPointer( propertyValue:any[], digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema, definition?:DigestedObjectSchemaProperty ):any[] {
+		return propertyValue.map( value => this.expandPointerValue( value, digestedSchema, generalSchema, definition ) );
 	}
 
 	private expandPropertyLiteral( propertyValue:any[], definition:ObjectSchema.DigestedObjectSchemaProperty, digestedSchema:ObjectSchema.DigestedObjectSchema ):any[] {
@@ -154,7 +158,7 @@ export class JSONLDConverter {
 		return mapValues;
 	}
 
-	private expandPointerValue( propertyValue:any, digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema ):RDFNode {
+	private expandPointerValue( propertyValue:any, digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema, definition?:DigestedObjectSchemaProperty ):RDFNode {
 		const isString:boolean = Utils.isString( propertyValue );
 		const id:string = Pointer.is( propertyValue ) ?
 			propertyValue.id :
@@ -165,16 +169,21 @@ export class JSONLDConverter {
 		// TODO: Warn of data loss
 		if( ! id ) return null;
 
-		const resolved:string = ObjectSchema.ObjectSchemaUtils.resolveURI( id, generalSchema, { vocab: isString, base: true } );
+		const relativeTo:{ vocab?:boolean, base?:boolean } = definition ?
+			definition.pointerType === PointerType.VOCAB ? { vocab: true } : { base: true } :
+			isString ? { vocab: true } : {}
+		;
+
+		const resolved:string = ObjectSchema.ObjectSchemaUtils.resolveURI( id, generalSchema, relativeTo );
 		return { "@id": resolved };
 	}
 
-	private expandValue( propertyValue:any, digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema ):any {
+	private expandValue( propertyValue:any, digestedSchema:ObjectSchema.DigestedObjectSchema, generalSchema:ObjectSchema.DigestedObjectSchema, definition?:DigestedObjectSchemaProperty ):any {
 		// TODO: Lists of lists are not currently supported by the spec
 		if( Utils.isArray( propertyValue ) ) return null;
 
 		return Pointer.is( propertyValue ) ?
-			this.expandPointerValue( propertyValue, generalSchema, digestedSchema ) :
+			this.expandPointerValue( propertyValue, generalSchema, digestedSchema, definition ) :
 			this.expandLiteralValue( propertyValue, guessXSDType( propertyValue ) )
 			;
 	}

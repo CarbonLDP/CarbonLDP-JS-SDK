@@ -5,11 +5,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var tokens_1 = require("sparqler/tokens");
 var AccessPoint_1 = require("./AccessPoint");
-var Auth = __importStar(require("./Auth"));
 var ACL_1 = require("./Auth/ACL");
 var User_1 = require("./Auth/User");
 var Document_1 = require("./Document");
@@ -75,8 +74,7 @@ var Documents = (function () {
             decorators
                 .set(ProtectedDocument_1.ProtectedDocument.TYPE, ProtectedDocument_1.ProtectedDocument.decorate)
                 .set(User_1.User.TYPE, User_1.User.decorate)
-                .set(ACL_1.ACL.TYPE, ACL_1.ACL.decorate)
-                .set(Auth.Role.RDF_CLASS, Auth.PersistedRole.Factory.decorate);
+                .set(ACL_1.ACL.TYPE, ACL_1.ACL.decorate);
         }
         this._documentDecorators = decorators;
     }
@@ -956,8 +954,6 @@ var Documents = (function () {
         Request_1.RequestUtils.setContentTypeHeader("application/ld+json", requestOptions);
         if (document.id) {
             var childURI = document.id;
-            if (!!this.context)
-                childURI = this.context.resolve(childURI);
             if (!URI_1.URI.isBaseOf(parentURI, childURI)) {
                 return Promise.reject(new Errors.IllegalArgumentError("The document's URI is not relative to the parentURI specified"));
             }
