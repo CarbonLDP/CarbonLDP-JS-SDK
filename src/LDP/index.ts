@@ -1,3 +1,4 @@
+export * from "./AccessPointsMetadata";
 export * from "./AddMemberAction";
 export * from "./Error";
 export * from "./Map";

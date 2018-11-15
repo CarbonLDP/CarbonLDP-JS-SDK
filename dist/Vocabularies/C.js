@@ -4,6 +4,7 @@ exports.C = {
     namespace: "https://carbonldp.com/ns/v1/platform#",
     AccessPoint: "https://carbonldp.com/ns/v1/platform#AccessPoint",
     AccessPointCreated: "https://carbonldp.com/ns/v1/platform#AccessPointCreated",
+    AccessPointsMetadata: "https://carbonldp.com/ns/v1/platform#AccessPointsMetadata",
     AddMemberAction: "https://carbonldp.com/ns/v1/platform#AddMemberAction",
     ChildCreated: "https://carbonldp.com/ns/v1/platform#ChildCreatedEvent",
     Document: "https://carbonldp.com/ns/v1/platform#Document",

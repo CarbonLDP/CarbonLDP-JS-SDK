@@ -5,7 +5,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Errors_1 = require("./Errors");
 var URI_1 = require("./RDF/URI");
@@ -36,7 +36,6 @@ exports.DigestedObjectSchemaProperty = DigestedObjectSchemaProperty;
 var DigestedObjectSchema = (function () {
     function DigestedObjectSchema() {
         this.base = "";
-        this.vocab = null;
         this.language = null;
         this.prefixes = new Map();
         this.properties = new Map();
@@ -116,6 +115,20 @@ var ObjectSchemaDigester = (function () {
         digestedSchemas.unshift(new DigestedObjectSchema());
         return ObjectSchemaDigester._combineSchemas(digestedSchemas);
     };
+    ObjectSchemaDigester._combineSchemas = function (digestedSchemas) {
+        var targetSchema = digestedSchemas[0], restSchemas = digestedSchemas.slice(1);
+        restSchemas.forEach(function (schema) {
+            if (schema.vocab !== void 0)
+                targetSchema.vocab = schema.vocab;
+            if (schema.base !== "")
+                targetSchema.base = schema.base;
+            if (schema.language !== null)
+                targetSchema.language = schema.language;
+            Utils.MapUtils.extend(targetSchema.prefixes, schema.prefixes);
+            Utils.MapUtils.extend(targetSchema.properties, schema.properties);
+        });
+        return targetSchema;
+    };
     ObjectSchemaDigester._digestSchema = function (schema) {
         var digestedSchema = new DigestedObjectSchema();
         for (var _i = 0, _a = ["@base", "@vocab"]; _i < _a.length; _i++) {
@@ -123,10 +136,14 @@ var ObjectSchemaDigester = (function () {
             if (!(propertyName in schema))
                 continue;
             var value = schema[propertyName];
-            if (value !== null && !Utils.isString(value))
-                throw new Errors_1.IllegalArgumentError("The value of '" + propertyName + "' must be a string or null.");
-            if ((propertyName === "@vocab" && value === "") || !URI_1.URI.isAbsolute(value) && !URI_1.URI.isBNodeID(value))
-                throw new Errors_1.IllegalArgumentError("The value of '" + propertyName + "' must be an absolute URI" + (propertyName === "@base" ? " or an empty string" : "") + ".");
+            if (value !== null) {
+                if (!Utils.isString(value))
+                    throw new Errors_1.IllegalArgumentError("The value of '" + propertyName + "' must be a string or null.");
+                if (propertyName === "@vocab" && value === "")
+                    throw new Errors_1.IllegalArgumentError("The value of '" + propertyName + "' must be an absolute URI.");
+                if (!URI_1.URI.isAbsolute(value) && !URI_1.URI.isBNodeID(value))
+                    throw new Errors_1.IllegalArgumentError("The value of '" + propertyName + "' must be an absolute URI" + (propertyName === "@base" ? " or an empty string" : "") + ".");
+            }
             digestedSchema[propertyName.substr(1)] = value;
         }
         digestedSchema.base = digestedSchema.base || "";
@@ -165,20 +182,6 @@ var ObjectSchemaDigester = (function () {
         }
         return digestedSchema;
     };
-    ObjectSchemaDigester._combineSchemas = function (digestedSchemas) {
-        var targetSchema = digestedSchemas[0], restSchemas = digestedSchemas.slice(1);
-        restSchemas.forEach(function (schema) {
-            if (schema.vocab !== null)
-                targetSchema.vocab = schema.vocab;
-            if (schema.base !== "")
-                targetSchema.base = schema.base;
-            if (schema.language !== null)
-                targetSchema.language = schema.language;
-            Utils.MapUtils.extend(targetSchema.prefixes, schema.prefixes);
-            Utils.MapUtils.extend(targetSchema.properties, schema.properties);
-        });
-        return targetSchema;
-    };
     return ObjectSchemaDigester;
 }());
 exports.ObjectSchemaDigester = ObjectSchemaDigester;
@@ -199,7 +202,7 @@ var ObjectSchemaUtils = (function () {
         }
         if (localName)
             return uri;
-        if (relativeTo.vocab && schema.vocab !== null)
+        if (relativeTo.vocab && Utils.isString(schema.vocab))
             return schema.vocab + uri;
         if (relativeTo.base)
             return URI_1.URI.resolve(schema.base, uri);

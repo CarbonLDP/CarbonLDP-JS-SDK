@@ -12,18 +12,24 @@ import {
 	ValuesToken,
 	VariableToken,
 } from "sparqler/tokens";
-import { BaseAccessPoint } from "./AccessPoint";
 
 import {
-	TransientAccessPoint,
-	} from "./AccessPoint";
+	AccessPoint,
+	BaseAccessPoint,
+	TransientAccessPoint
+} from "./AccessPoint";
 import * as Auth from "./Auth";
 import { ACL } from "./Auth/ACL";
 import { User } from "./Auth/User";
+import { BlankNode } from "./BlankNode";
 import { CarbonLDP } from "./CarbonLDP";
 import { Context } from "./Context";
-import { TransientDocument } from "./Document";
+import {
+	Document,
+	TransientDocument
+} from "./Document";
 import * as Errors from "./Errors";
+import { Fragment } from "./Fragment";
 import { FreeResources } from "./FreeResources";
 import { statusCodeMap } from "./HTTP/Errors";
 import { HTTPError } from "./HTTP/Errors/HTTPError";
@@ -43,6 +49,7 @@ import { Response } from "./HTTP/Response";
 import { JSONLDCompacter } from "./JSONLD/Compacter";
 import { JSONLDConverter } from "./JSONLD/Converter";
 import { JSONLDParser } from "./JSONLD/Parser";
+import { AccessPointsMetadata } from "./LDP";
 import { AddMemberAction } from "./LDP/AddMemberAction";
 import { DocumentMetadata } from "./LDP/DocumentMetadata";
 import { ErrorResponse } from "./LDP/ErrorResponse";
@@ -68,25 +75,22 @@ import {
 	ObjectSchemaResolver,
 	ObjectSchemaUtils,
 } from "./ObjectSchema";
-import { AccessPoint } from "./AccessPoint";
-import { BlankNode } from "./BlankNode";
-import { Document } from "./Document";
-import { Fragment } from "./Fragment";
-import { ProtectedDocument } from "./ProtectedDocument";
-import { Resource } from "./Resource";
 import {
 	Pointer,
 	PointerLibrary,
 	PointerValidator,
 } from "./Pointer";
-import { TransientProtectedDocument } from "./ProtectedDocument";
+import { ProtectedDocument } from "./ProtectedDocument";
 import {
 	RDFDocument,
 	RDFDocumentParser,
 } from "./RDF/Document";
 import { RDFNode } from "./RDF/Node";
 import { URI } from "./RDF/URI";
-import { TransientResource } from "./Resource";
+import {
+	Resource,
+	TransientResource
+} from "./Resource";
 import {
 	FinishSPARQLSelect,
 	SPARQLBuilder,
@@ -109,6 +113,7 @@ import {
 	createTypesPattern,
 	getAllTriples,
 	getPathProperty,
+	getResourcesVariables,
 } from "./SPARQL/QueryDocument/Utils";
 import { SPARQLRawResults } from "./SPARQL/RawResults";
 import { SPARQLSelectResults } from "./SPARQL/SelectResults";
@@ -1075,9 +1080,10 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 	}
 
 	private _executeConstructPatterns<T extends object>( uri:string, requestOptions:RequestOptions, queryContext:QueryContext, targetName:string, constructPatterns:PatternToken[], targetDocument?:T & Document ):Promise<(T & Document)[]> {
-		const metadataVar:VariableToken = queryContext.getVariable( "metadata" );
+		const queryMetadata:VariableToken = queryContext.getVariable( "queryMetadata" );
+		const accessPointsMetadata:VariableToken = queryContext.getVariable( "accessPointsMetadata" );
 		const construct:ConstructToken = new ConstructToken()
-			.addTriple( new SubjectToken( metadataVar )
+			.addTriple( new SubjectToken( queryMetadata )
 				.addPredicate( new PredicateToken( "a" )
 					.addObject( queryContext.compactIRI( C.VolatileResource ) )
 					.addObject( queryContext.compactIRI( C.QueryMetadata ) )
@@ -1086,11 +1092,45 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 					.addObject( queryContext.getVariable( targetName ) )
 				)
 			)
-			.addPattern( new BindToken( "BNODE()", metadataVar ) )
+			.addPattern( new BindToken( "BNODE()", queryMetadata ) )
+			// TODO: Make GroupGraphToken in `sparqler`
+			.addPattern( `{ ${ new BindToken( "BNODE()", accessPointsMetadata ) } }` as any )
 			.addPattern( ...constructPatterns );
 
 		const query:QueryToken = new QueryToken( construct )
 			.addPrologues( ...queryContext.getPrologues() );
+
+		const accessPointsTriple:SubjectToken = new SubjectToken( accessPointsMetadata )
+			.addPredicate( new PredicateToken( "a" )
+				.addObject( queryContext.compactIRI( C.VolatileResource ) )
+				.addObject( queryContext.compactIRI( C.AccessPointsMetadata ) )
+			);
+		construct.addTriple( accessPointsTriple );
+
+		getResourcesVariables( constructPatterns )
+			.forEach( resource => {
+				const name:string = resource.name.replace( /__/g, "." );
+				const accessPoints:VariableToken = queryContext.getVariable( name + ".accessPoints" );
+				const relation:VariableToken = queryContext.getVariable( name + ".accessPoints.hasMemberRelation" );
+
+				construct
+					.addPattern( new OptionalToken()
+						.addPattern( new SubjectToken( resource )
+							.addPredicate( new PredicateToken( queryContext.compactIRI( C.accessPoint ) )
+								.addObject( accessPoints )
+							)
+						)
+						.addPattern( new SubjectToken( accessPoints )
+							.addPredicate( new PredicateToken( queryContext.compactIRI( LDP.hasMemberRelation ) )
+								.addObject( relation )
+							)
+						)
+					);
+
+				accessPointsTriple
+					.addPredicate( new PredicateToken( relation )
+						.addObject( accessPoints ) );
+			} );
 
 		const triples:SubjectToken[] = getAllTriples( constructPatterns );
 		construct.addTriple( ...triples );
@@ -1103,23 +1143,15 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 				return new JSONLDParser().parse( jsonldString );
 
 			} ).then<(T & Document)[]>( ( rdfNodes:RDFNode[] ) => {
-				const freeNodes:RDFNode[] = RDFNode.getFreeNodes( rdfNodes );
-				const freeResources:FreeResources = this._getFreeResources( freeNodes );
-
-				const targetSet:Set<string> = new Set( freeResources
-					.getResources()
-					.filter( QueryMetadata.is )
-					.map( x => this.context ? x.target : x[ C.target ] )
-					// Alternative to flatMap
-					.reduce( ( targets, currentTargets ) => targets.concat( currentTargets ), [] )
-					.map( x => x.id )
-				);
-
 				const targetETag:string = targetDocument && targetDocument._eTag;
 				if( targetDocument ) targetDocument._eTag = void 0;
 
-				freeResources
+				const freeResources:TransientResource[] = this
+					._getFreeResources( RDFNode.getFreeNodes( rdfNodes ) )
 					.getResources()
+				;
+
+				freeResources
 					.filter( ResponseMetadata.is )
 					.map<DocumentMetadata[] | DocumentMetadata>( responseMetadata => responseMetadata.documentsMetadata || responseMetadata[ C.documentMetadata ] )
 					.map<DocumentMetadata[]>( documentsMetadata => Array.isArray( documentsMetadata ) ? documentsMetadata : [ documentsMetadata ] )
@@ -1142,11 +1174,24 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 				const rdfDocuments:RDFDocument[] = rdfNodes
 					.filter<any>( RDFDocument.is );
 
+				const targetSet:Set<string> = new Set( freeResources
+					.filter( QueryMetadata.is )
+					.map( x => this.context ? x.target : x[ C.target ] )
+					// Alternative to flatMap
+					.reduce( ( targets, currentTargets ) => targets.concat( currentTargets ), [] )
+					.map( x => x.id )
+				);
 				const targetDocuments:RDFDocument[] = rdfDocuments
 					.filter( x => targetSet.has( x[ "@id" ] ) );
 
-				return new JSONLDCompacter( this, targetName, queryContext )
+				const documents:(T & Document)[] = new JSONLDCompacter( this, targetName, queryContext )
 					.compactDocuments( rdfDocuments, targetDocuments );
+
+				const accessPointsMetadatas:AccessPointsMetadata[] = freeResources
+					.filter( AccessPointsMetadata.is );
+				this._applyAccessPointsMetadatas( accessPointsMetadatas );
+
+				return documents;
 			} );
 	}
 
@@ -1435,6 +1480,93 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 		}
 	}
 
+	private _applyAccessPointsMetadatas( accessPointsMetadatas:AccessPointsMetadata[] ):void {
+		if( ! accessPointsMetadatas.length ) return;
+
+		const getResourcesData:( resourceURI:string ) => MembershipResourceData = this
+			._createMembershipResourceDataGetter();
+
+		accessPointsMetadatas.forEach( metadata => {
+			const relationURIs:string[] = Object.keys( metadata );
+
+			relationURIs.forEach( relationURI => {
+				const pointers:Pointer[] = Array.isArray( metadata[ relationURI ] ) ?
+					metadata[ relationURI ] : [ metadata[ relationURI ] ];
+
+				const compactRelation:( schema:DigestedObjectSchema, uris:Map<string, string> ) => string = ( schema, uris ) => {
+					if( uris.has( relationURI ) ) return uris.get( relationURI );
+					if( schema.vocab ) return URI.getRelativeURI( relationURI, schema.vocab );
+
+					return relationURI;
+				};
+
+				pointers.forEach( pointer => {
+					const resourceURI:string = pointer.id
+						.split( "/" )
+						.slice( 0, - 2 )
+						.concat( "" )
+						.join( "/" );
+
+					const { resource, schema, uris } = getResourcesData( resourceURI );
+					const relationName:string = compactRelation( schema, uris );
+
+					const accessPoint:AccessPoint = ProtectedDocument
+						.decorate( pointer, this );
+
+					Object.defineProperty( resource, "$" + relationName, {
+						enumerable: false,
+						configurable: true,
+						value: accessPoint,
+					} );
+				} );
+			} );
+		} );
+	}
+
+	private _createMembershipResourceGetter():( resourceURI:string ) => Document {
+		const resources:Map<string, Document> = new Map();
+		return resourceURI => {
+			if( resources.has( resourceURI ) ) return resources.get( resourceURI );
+			const resource:Document = this.register( resourceURI );
+
+			// Delete existing access points
+			Object
+				.getOwnPropertyNames( resource )
+				.filter( key => key.startsWith( "$" ) )
+				.filter( key => ! resource.propertyIsEnumerable( key ) )
+				.forEach( key => delete resource[ key ] )
+			;
+
+			resources.set( resourceURI, resource );
+			return resource;
+		};
+	}
+
+	private _createMembershipResourceDataGetter():( resourceURI:string ) => MembershipResourceData {
+		const getResource:( resourceURI:string ) => Document = this
+			._createMembershipResourceGetter();
+
+		const resourcesData:Map<string, MembershipResourceData> = new Map();
+		return resourceURI => {
+			if( resourcesData.has( resourceURI ) ) return resourcesData.get( resourceURI );
+			const resource:Document = getResource( resourceURI );
+
+			const schema:DigestedObjectSchema = this._getDigestedObjectSchema( resource.types, resource.id );
+			if( resource.isPartial() ) ObjectSchemaDigester._combineSchemas( [ schema, resource._partialMetadata.schema ] );
+
+			const uris:Map<string, string> = JSONLDConverter.getPropertyURINameMap( schema );
+
+			const resourceData:MembershipResourceData = {
+				resource,
+				schema,
+				uris,
+			};
+
+			resourcesData.set( resourceURI, resourceData );
+			return resourceData;
+		};
+	}
+
 	private _sendRequest( method:HTTPMethod, uri:string, options:RequestOptions, body?:string | Blob | Buffer ):Promise<Response>;
 	private _sendRequest<T extends object>( method:HTTPMethod, uri:string, options:RequestOptions, body?:string | Blob | Buffer, parser?:Parser<T> ):Promise<[ T, Response ]>;
 	private _sendRequest( method:HTTPMethod, uri:string, options:RequestOptions, body?:string | Blob | Buffer, parser?:Parser<any> ):any {
@@ -1442,5 +1574,8 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 			.catch( this._parseErrorResponse.bind( this ) );
 	}
 }
+
+
+type MembershipResourceData = { resource:Resource, schema:DigestedObjectSchema, uris:Map<string, string> };
 
 const emptyQueryBuildFn:( queryBuilder:QueryDocumentsBuilder ) => QueryDocumentsBuilder = _ => _;

@@ -8,22 +8,11 @@ import * as Utils from "../Utils";
 
 import * as LDP from "./";
 
+import { AccessPointsMetadata } from "./AccessPointsMetadata";
 import {
 	AddMemberAction,
 	AddMemberActionFactory,
 } from "./AddMemberAction";
-import {
-	Error,
-	ErrorFactory,
-} from "./Error";
-import {
-	Map,
-	MapFactory,
-} from "./Map";
-import {
-	MapEntry,
-	MapEntryFactory,
-} from "./MapEntry";
 import {
 	TransientDirectContainer,
 	TransientDirectContainerFactory,
@@ -33,9 +22,21 @@ import {
 	DocumentMetadataFactory,
 } from "./DocumentMetadata";
 import {
+	Error,
+	ErrorFactory,
+} from "./Error";
+import {
 	ErrorResponse,
 	ErrorResponseFactory,
 } from "./ErrorResponse";
+import {
+	Map,
+	MapFactory,
+} from "./Map";
+import {
+	MapEntry,
+	MapEntryFactory,
+} from "./MapEntry";
 import {
 	RemoveMemberAction,
 	RemoveMemberActionFactory,
@@ -58,6 +59,15 @@ describe( module( "carbonldp/LDP" ), ():void => {
 	it( isDefined(), ():void => {
 		expect( LDP ).toBeDefined();
 		expect( Utils.isObject( LDP ) ).toBe( true );
+	} );
+
+	it( reexports(
+		STATIC,
+		"AccessPointsMetadata",
+		"CarbonLDP.LDP.AccessPointsMetadata"
+	), ():void => {
+		expect( LDP.AccessPointsMetadata ).toBeDefined();
+		expect( LDP.AccessPointsMetadata ).toBe( AccessPointsMetadata );
 	} );
 
 	it( reexports(

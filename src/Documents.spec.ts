@@ -19,14 +19,20 @@ import {
 	ValuesToken,
 	VariableToken
 } from "sparqler/tokens";
+import { anyThatMatches } from "../test/helpers/jasmine-equalities";
 
 import { AbstractContext } from "./AbstractContext";
-import { BaseAccessPoint } from "./AccessPoint";
-import { AccessPoint } from "./AccessPoint";
+import {
+	AccessPoint,
+	BaseAccessPoint,
+	TransientAccessPoint
+} from "./AccessPoint";
 import { TransientBlankNode } from "./BlankNode";
 import { CarbonLDP } from "./CarbonLDP";
-import { Document } from "./Document";
-import { TransientDocument } from "./Document";
+import {
+	Document,
+	TransientDocument
+} from "./Document";
 
 import { Documents } from "./Documents";
 
@@ -42,6 +48,7 @@ import * as MessagingUtils from "./Messaging/Utils";
 import { NamedFragment } from "./NamedFragment";
 import * as ObjectSchema from "./ObjectSchema";
 import { Pointer } from "./Pointer";
+import { ProtectedDocument } from "./ProtectedDocument";
 import {
 	Resource,
 	TransientResource
@@ -60,14 +67,12 @@ import {
 	method,
 	module,
 } from "./test/JasmineExtender";
-import {
-	TransientAccessPoint,
-} from "./AccessPoint";
 import * as Utils from "./Utils";
 import { C } from "./Vocabularies/C";
 import { CS } from "./Vocabularies/CS";
 import { LDP } from "./Vocabularies/LDP";
 import { XSD } from "./Vocabularies/XSD";
+
 
 function createPartialMetadata( schema:ObjectSchema.ObjectSchema ):PartialMetadata {
 	const digestedSchema:ObjectSchema.DigestedObjectSchema = ObjectSchema.ObjectSchemaDigester.digestSchema( schema );
@@ -87,7 +92,7 @@ function createMockDocument<T extends { id:string }>( data:{ documents:Documents
 function findNonEnumerableProps( object:object ):void {
 	Object
 		.keys( object )
-		.filter( key => key.startsWith( "_" ) )
+		.filter( key => key.startsWith( "$" ) || key.startsWith( "_" ) )
 		.forEach( key => Object.defineProperty( object, key, { enumerable: false, configurable: true } ) )
 	;
 
@@ -97,6 +102,11 @@ function findNonEnumerableProps( object:object ):void {
 		.map( key => object[ key ] )
 		.forEach( findNonEnumerableProps )
 	;
+}
+
+function createMockAccessPoint<T extends { id:string }>( data:{ documents:Documents, props:T } ):T & AccessPoint {
+	const doc:T & Document = createMockDocument( data );
+	return ProtectedDocument.decorate( doc, data.documents );
 }
 
 describe( module( "carbonldp/Documents" ), ():void => {
@@ -1180,8 +1190,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"https://example.com/resource/",
 							"PREFIX schema: <https://schema.org/> " +
 							"CONSTRUCT {" +
-							` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+							` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 							"" + ` <${ C.target }> ?document.` +
+
+							` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+							"" + ` ?document__accessPoints__hasMemberRelation ?document__accessPoints;` +
+							"" + ` ?document__property2__accessPoints__hasMemberRelation ?document__property2__accessPoints.` +
 
 							" ?document a ?document__types;" +
 							"" + " <https://example.com/ns#property-1> ?document__property1;" +
@@ -1192,7 +1206,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + " schema:property-3 ?document__property2__property3 " +
 
 							"} WHERE {" +
-							" BIND(BNODE() AS ?metadata)." +
+							" BIND(BNODE() AS ?queryMetadata)." +
+							" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 							" VALUES ?document { <https://example.com/resource/> }." +
 							" OPTIONAL { ?document a ?document__types }." +
@@ -1217,6 +1232,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + "" + " ?document__property2 schema:property-3 ?document__property2__property3." +
 							"" + "" + " FILTER( datatype( ?document__property2__property3 ) = <http://www.w3.org/2001/XMLSchema#string> )" +
 							"" + " }" +
+							" }." +
+
+							" OPTIONAL {" +
+							"" + ` ?document <${ C.accessPoint }> ?document__accessPoints.` +
+							"" + ` ?document__accessPoints <${ LDP.hasMemberRelation }> ?document__accessPoints__hasMemberRelation` +
+							" }." +
+							" OPTIONAL {" +
+							"" + ` ?document__property2 <${ C.accessPoint }> ?document__property2__accessPoints.` +
+							"" + ` ?document__property2__accessPoints <${ LDP.hasMemberRelation }> ?document__property2__accessPoints__hasMemberRelation` +
+
 							" } " +
 							"}",
 
@@ -1893,6 +1918,114 @@ describe( module( "carbonldp/Documents" ), ():void => {
 					} ).catch( done.fail );
 				} );
 
+
+				it( "should add retrieved access points from metadata", ( done:DoneFn ):void => {
+					jasmine.Ajax.stubRequest( "https://example.com/resource/" ).andReturn( {
+						status: 200,
+						responseText: `[ {
+							"@id":"_:1",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.QueryMetadata }"
+							],
+							"${ C.target }": [ {
+								"@id":"https://example.com/resource/"
+							} ]
+						}, {
+							"@id": "_:2",
+							"@type": [
+								"${ C.ResponseMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.documentMetadata }": [ {
+								"@id": "_:3"
+							} ]
+						}, {
+							"@id": "_:3",
+							"@type": [
+								"${ C.DocumentMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.eTag }": [ {
+								"@value": "\\"1-12345\\""
+							} ],
+							"${ C.relatedDocument }": [ {
+								"@id": "https://example.com/resource/"
+							} ]
+						}, {
+							"@id": "_:4",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.AccessPointsMetadata }"
+							],
+							"https://example.com/ns#relation-1": [ {
+								"@id": "https://example.com/resource/relation-1/"
+							} ],
+							"https://example.com/ns#relation-2": {
+								"@id": "https://example.com/resource/relation-2/"
+							},
+							"https://example.com/ns#relation3": {
+								"@id": "https://example.com/resource/relation-3/"
+							}
+						}, {
+							"@id": "https://example.com/resource/",
+							"@graph": [ {
+								"@id": "https://example.com/resource/",
+								"@type": [
+									"${ C.Document }",
+									"https://example.com/ns#Resource",
+									"${ LDP.BasicContainer }",
+									"${ LDP.RDFSource }"
+								]
+							} ]
+						} ]`,
+					} );
+
+
+					interface MyDocument {
+						$relation1:AccessPoint;
+						$relation2:AccessPoint;
+						$relation3:AccessPoint;
+					}
+
+					context.extendObjectSchema( "https://example.com/ns#Resource", {
+						"relation1": {
+							"@id": "https://example.com/ns#relation-1",
+							"@type": "@id",
+							"@container": "@set",
+						},
+						"relation2": {
+							"@id": "https://example.com/ns#relation-2",
+							"@type": "@id",
+						},
+					} );
+
+
+					documents
+						.get<MyDocument>( "https://example.com/resource/", _ => _
+							.withType( "https://example.com/ns#Resource" )
+							.properties( {} )
+						)
+						.then( ( document ) => {
+							expect( document.$relation1 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+							expect( document.$relation1 ).toEqual( jasmine.objectContaining( {
+								id: "https://example.com/resource/relation-1/",
+							} ) );
+
+							expect( document.$relation2 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+							expect( document.$relation2 ).toEqual( jasmine.objectContaining( {
+								id: "https://example.com/resource/relation-2/",
+							} ) );
+
+							expect( document.$relation3 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+							expect( document.$relation3 ).toEqual( jasmine.objectContaining( {
+								id: "https://example.com/resource/relation-3/",
+							} ) );
+
+							done();
+						} ).catch( done.fail );
+				} );
+
 			} );
 
 			describe( "When Documents does not have a context", ():void => {
@@ -1980,8 +2113,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						expect( sendSpy ).toHaveBeenCalledWith(
 							"https://example.com/resource/", "" +
 							"CONSTRUCT {" +
-							` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+							` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 							"" + ` <${ C.target }> ?document.` +
+
+							` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+							"" + ` ?document__accessPoints__hasMemberRelation ?document__accessPoints;` +
+							"" + ` ?document__property2__accessPoints__hasMemberRelation ?document__property2__accessPoints.` +
 
 							" ?document a ?document__types;" +
 							"" + " <https://example.com/ns#property-1> ?document__property1;" +
@@ -1992,7 +2129,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + " <https://schema.org/property-3> ?document__property2__property3 " +
 
 							"} WHERE {" +
-							" BIND(BNODE() AS ?metadata)." +
+							" BIND(BNODE() AS ?queryMetadata)." +
+							" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 							" VALUES ?document { <https://example.com/resource/> }." +
 							" OPTIONAL { ?document a ?document__types }." +
@@ -2017,6 +2155,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + "" + " ?document__property2 <https://schema.org/property-3> ?document__property2__property3." +
 							"" + "" + " FILTER( datatype( ?document__property2__property3 ) = <http://www.w3.org/2001/XMLSchema#string> )" +
 							"" + " }" +
+							" }." +
+
+							" OPTIONAL {" +
+							"" + ` ?document <${ C.accessPoint }> ?document__accessPoints.` +
+							"" + ` ?document__accessPoints <${ LDP.hasMemberRelation }> ?document__accessPoints__hasMemberRelation` +
+							" }." +
+							" OPTIONAL {" +
+							"" + ` ?document__property2 <${ C.accessPoint }> ?document__property2__accessPoints.` +
+							"" + ` ?document__property2__accessPoints <${ LDP.hasMemberRelation }> ?document__property2__accessPoints__hasMemberRelation` +
+
 							" } " +
 							"}",
 
@@ -3938,13 +4086,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"https://example.com/resource/",
 
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?child.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?child__accessPoints__hasMemberRelation ?child__accessPoints.` +
 
 								" ?child a ?child__types " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?child WHERE {" +
@@ -3952,8 +4104,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"" + " }" +
 								" }." +
 
-								" OPTIONAL { ?child a ?child__types } " +
+								" OPTIONAL { ?child a ?child__types }." +
 
+								" OPTIONAL {" +
+								"" + ` ?child <${ C.accessPoint }> ?child__accessPoints.` +
+								"" + ` ?child__accessPoints <${ LDP.hasMemberRelation }> ?child__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -4176,13 +4333,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"https://example.com/resource/",
 
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?child.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?child__accessPoints__hasMemberRelation ?child__accessPoints.` +
 
 								" ?child a ?child__types " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?child WHERE {" +
@@ -4190,8 +4351,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"" + " }" +
 								" }." +
 
-								" OPTIONAL { ?child a ?child__types } " +
+								" OPTIONAL { ?child a ?child__types }." +
 
+								" OPTIONAL {" +
+								"" + ` ?child <${ C.accessPoint }> ?child__accessPoints.` +
+								"" + ` ?child__accessPoints <${ LDP.hasMemberRelation }> ?child__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -4483,8 +4649,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"https://example.com/resource/",
 							"PREFIX schema: <https://schema.org/> " +
 							"CONSTRUCT {" +
-							` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+							` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 							"" + ` <${ C.target }> ?child.` +
+
+							` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+							"" + ` ?child__accessPoints__hasMemberRelation ?child__accessPoints;` +
+							"" + ` ?child__property2__accessPoints__hasMemberRelation ?child__property2__accessPoints.` +
 
 							" ?child a ?child__types;" +
 							"" + " <https://example.com/ns#property-1> ?child__property1;" +
@@ -4495,7 +4665,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + " schema:property-3 ?child__property2__property3 " +
 
 							"} WHERE {" +
-							" BIND(BNODE() AS ?metadata)." +
+							" BIND(BNODE() AS ?queryMetadata)." +
+							" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 							" {" +
 							"" + " SELECT DISTINCT ?child WHERE {" +
@@ -4529,6 +4700,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + "" + " ?child__property2 schema:property-3 ?child__property2__property3." +
 							"" + "" + " FILTER( datatype( ?child__property2__property3 ) = <http://www.w3.org/2001/XMLSchema#string> )" +
 							"" + " }" +
+							" }." +
+
+							" OPTIONAL {" +
+							"" + ` ?child <${ C.accessPoint }> ?child__accessPoints.` +
+							"" + ` ?child__accessPoints <${ LDP.hasMemberRelation }> ?child__accessPoints__hasMemberRelation` +
+							" }." +
+							" OPTIONAL {" +
+							"" + ` ?child__property2 <${ C.accessPoint }> ?child__property2__accessPoints.` +
+							"" + ` ?child__property2__accessPoints <${ LDP.hasMemberRelation }> ?child__property2__accessPoints__hasMemberRelation` +
+
 							" } " +
 							"}",
 
@@ -4576,13 +4757,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							expect( sendSpy ).toHaveBeenCalledWith(
 								"https://example.com/resource/",
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?child.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?child__accessPoints__hasMemberRelation ?child__accessPoints.` +
 
 								" ?child___subject ?child___predicate ?child___object " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?child WHERE {" +
@@ -4592,8 +4777,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 								" GRAPH ?child {" +
 								"" + " ?child___subject ?child___predicate ?child___object" +
-								" } " +
+								" }." +
 
+								" OPTIONAL {" +
+								"" + ` ?child <${ C.accessPoint }> ?child__accessPoints.` +
+								"" + ` ?child__accessPoints <${ LDP.hasMemberRelation }> ?child__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -4647,13 +4837,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"https://example.com/resource/",
 								"PREFIX schema: <https://schema.org/> " +
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?child.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?child__accessPoints__hasMemberRelation ?child__accessPoints.` +
 
 								" ?child ?child___predicate ?child___object " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?child WHERE {" +
@@ -4670,9 +4864,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								" OPTIONAL {" +
 								"" + " ?child schema:property-2 ?child__property2." +
 								"" + " FILTER( datatype( ?child__property2 ) = <http://www.w3.org/2001/XMLSchema#integer> )" +
-								" }" +
+								" }." +
 
-								" " +
+								" OPTIONAL {" +
+								"" + ` ?child <${ C.accessPoint }> ?child__accessPoints.` +
+								"" + ` ?child__accessPoints <${ LDP.hasMemberRelation }> ?child__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -4757,7 +4955,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 						expect( query ).toEqual( new QueryToken(
 							new ConstructToken()
-								.addTriple( new SubjectToken( variableHelper( "metadata" ) )
+								.addTriple( new SubjectToken( variableHelper( "queryMetadata" ) )
 									.addPredicate( new PredicateToken( "a" )
 										.addObject( new IRIToken( C.VolatileResource ) )
 										.addObject( new IRIToken( C.QueryMetadata ) )
@@ -4765,6 +4963,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									.addPredicate( new PredicateToken( new IRIToken( C.target ) )
 										.addObject( variableHelper( "child" ) )
 									)
+								)
+								.addTriple( new SubjectToken( variableHelper( "accessPointsMetadata" ) )
+									.addPredicate( new PredicateToken( "a" )
+										.addObject( new IRIToken( C.VolatileResource ) )
+										.addObject( new IRIToken( C.AccessPointsMetadata ) )
+									)
+									.addPredicate( new PredicateToken( variableHelper( "child__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "child__accessPoints" ) ) )
+									.addPredicate( new PredicateToken( variableHelper( "child__property2__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "child__property2__accessPoints" ) ) )
 								)
 								.addTriple( new SubjectToken( variableHelper( "child" ) )
 									.addPredicate( new PredicateToken( "a" )
@@ -4789,7 +4997,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									)
 								)
 
-								.addPattern( new BindToken( "BNODE()", variableHelper( "metadata" ) ) )
+								.addPattern( new BindToken( "BNODE()", variableHelper( "queryMetadata" ) ) )
+								.addPattern( `{ ${ new BindToken( "BNODE()", "?accessPointsMetadata" as any ) } }` as any )
 								.addPattern( new SelectToken( "DISTINCT" )
 									.addVariable( variableHelper( "child" ) )
 									.addPattern( new SubjectToken( new IRIToken( "https://example.com/resource/" ) )
@@ -4864,6 +5073,30 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									)
 									.addPattern( new FilterToken( "datatype( ?child__property2__property3 ) = xsd:string" ) )
 								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "child" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "child__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "child__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "child__accessPoints__hasMemberRelation" ) )
+										)
+									)
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "child__property2" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "child__property2__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "child__property2__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "child__property2__accessPoints__hasMemberRelation" ) )
+										)
+									)
+								)
 							)
 
 								.addPrologues( new PrefixToken( "ex", new IRIToken( "https://example.com/ns#" ) ) )
@@ -4874,6 +5107,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						done();
 					} );
 				} );
+
 
 				it( "should order returned children", ( done:DoneFn ):void => {
 					jasmine.Ajax.stubRequest( "https://example.com/resource/" ).andReturn( {
@@ -5762,6 +5996,266 @@ describe( module( "carbonldp/Documents" ), ():void => {
 					} ).catch( done.fail );
 				} );
 
+
+				it( "should add retrieved access points from metadata", ( done:DoneFn ):void => {
+					jasmine.Ajax.stubRequest( "https://example.com/resource/" ).andReturn( {
+						status: 200,
+						responseText: `[ {
+							"@id":"_:1",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.QueryMetadata }"
+							],
+							"${ C.target }": [ {
+								"@id":"https://example.com/resource/child1/"
+							} ]
+						}, {
+							"@id":"_:2",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.QueryMetadata }"
+							],
+							"${ C.target }": [ {
+								"@id":"https://example.com/resource/child2/"
+							} ]
+						}, {
+							"@id": "_:3",
+							"@type": [
+								"${ C.ResponseMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.documentMetadata }": [ {
+								"@id": "_:4"
+							}, {
+								"@id": "_:5"
+							}, {
+								"@id": "_:6"
+							}, {
+								"@id": "_:7"
+							} ]
+						}, {
+							"@id": "_:4",
+							"@type": [
+								"${ C.DocumentMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.eTag }": [ {
+								"@value": "\\"1-12345\\""
+							} ],
+							"${ C.relatedDocument }": [ {
+								"@id": "https://example.com/resource/child1/"
+							} ]
+						}, {
+							"@id": "_:5",
+							"@type": [
+								"${ C.DocumentMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.eTag }": [ {
+								"@value": "\\"2-12345\\""
+							} ],
+							"${ C.relatedDocument }": [ {
+								"@id": "https://example.com/resource/child2/"
+							} ]
+						}, {
+							"@id": "_:6",
+							"@type": [
+								"${ C.DocumentMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.eTag }": [ {
+								"@value": "\\"3-12345\\""
+							} ],
+							"${ C.relatedDocument }": [ {
+								"@id": "https://example.com/sub-documents/sub-document1/"
+							} ]
+						}, {
+							"@id": "_:7",
+							"@type": [
+								"${ C.DocumentMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.eTag }": [ {
+								"@value": "\\"4-12345\\""
+							} ],
+							"${ C.relatedDocument }": [ {
+								"@id": "https://example.com/sub-documents/sub-document2/"
+							} ]
+						}, {
+							"@id": "_:8",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.AccessPointsMetadata }"
+							],
+							"https://example.com/ns#relation-1": [ {
+								"@id": "https://example.com/resource/child1/relation-1/"
+							}, {
+								"@id": "https://example.com/resource/child2/relation-1/"
+							}, {
+								"@id": "https://example.com/sub-documents/sub-document1/relation-1/"
+							} ],
+							"https://example.com/ns#relation-2": [ {
+								"@id": "https://example.com/resource/child1/relation-2/"
+							}, {
+								"@id": "https://example.com/resource/child2/relation-2/"
+							}, {
+								"@id": "https://example.com/sub-documents/sub-document2/relation-2/"
+							} ],
+							"https://example.com/ns#relation-3": [ {
+								"@id": "https://example.com/sub-documents/sub-document1/relation-3/"
+							}, {
+								"@id": "https://example.com/sub-documents/sub-document2/relation-3/"
+							} ]
+						}, {
+							"@id": "https://example.com/resource/child1/",
+							"@graph": [ {
+								"@id": "https://example.com/resource/child1/",
+								"@type": [
+									"${ C.Document }",
+									"https://example.com/ns#Resource",
+									"${ LDP.BasicContainer }",
+									"${ LDP.RDFSource }"
+								],
+								"https://schema.org/property-2": [ {
+									"@id": "https://example.com/sub-documents/sub-document1/"
+								} ]
+							} ]
+						}, {
+							"@id": "https://example.com/sub-documents/sub-document1/",
+							"@graph": [ {
+								"@id": "https://example.com/sub-documents/sub-document1/",
+								"@type": [
+									"${ C.Document }",
+									"https://example.com/ns#Resource",
+									"https://example.com/ns#AnotherResource",
+									"${ LDP.BasicContainer }",
+									"${ LDP.RDFSource }"
+								]
+							} ]
+						}, {
+							"@id": "https://example.com/resource/child2/",
+							"@graph": [ {
+								"@id": "https://example.com/resource/child2/",
+								"@type": [
+									"${ C.Document }",
+									"https://example.com/ns#Resource",
+									"${ LDP.BasicContainer }",
+									"${ LDP.RDFSource }"
+								],
+								"https://schema.org/property-2": [ {
+									"@id": "https://example.com/sub-documents/sub-document2/"
+								} ]
+							} ]
+						}, {
+							"@id": "https://example.com/sub-documents/sub-document2/",
+							"@graph": [ {
+								"@id": "https://example.com/sub-documents/sub-document2/",
+								"@type": [
+									"${ C.Document }",
+									"https://example.com/ns#Resource",
+									"https://example.com/ns#AnotherResource",
+									"${ LDP.BasicContainer }",
+									"${ LDP.RDFSource }"
+								]
+							} ]
+						} ]`,
+					} );
+
+					interface MyDocument {
+						$relation1:AccessPoint;
+						$relation2:AccessPoint;
+						property2:MySubDocument;
+					}
+
+					interface MySubDocument {
+						$subRelation1:AccessPoint;
+						$subRelation2:AccessPoint;
+						$relation3:AccessPoint;
+					}
+
+
+					context.extendObjectSchema( "Resource", {
+						"relation1": {
+							"@id": "https://example.com/ns#relation-1",
+							"@type": "@id",
+							"@container": "@set",
+						},
+						"relation2": {
+							"@id": "https://example.com/ns#relation-2",
+							"@type": "@id",
+						},
+						"property2": {
+							"@id": "https://schema.org/property-2",
+							"@type": "@id",
+						},
+					} );
+
+					context.extendObjectSchema( "AnotherResource", {
+						"subRelation1": {
+							"@id": "https://example.com/ns#relation-1",
+							"@type": "@id",
+							"@container": "@set",
+						},
+						"subRelation2": {
+							"@id": "https://example.com/ns#relation-2",
+							"@type": "@id",
+						},
+						"relation3": {
+							"@id": "https://example.com/ns#relation-3",
+							"@type": "@id",
+							"@container": "@set",
+						},
+					} );
+
+
+					documents.getChildren<MyDocument>( "https://example.com/resource/", _ => _
+						.withType( "Resource" )
+						.properties( {
+							"property2": {
+								"query": __ => __,
+							},
+						} )
+					).then( ( myDocuments ) => {
+						expect( myDocuments[ 0 ].$relation1 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 0 ].$relation1 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/resource/child1/relation-1/",
+						} ) );
+						expect( myDocuments[ 0 ].$relation2 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 0 ].$relation2 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/resource/child1/relation-2/",
+						} ) );
+
+						expect( myDocuments[ 1 ].$relation1 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 1 ].$relation1 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/resource/child2/relation-1/",
+						} ) );
+						expect( myDocuments[ 1 ].$relation2 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 1 ].$relation2 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/resource/child2/relation-2/",
+						} ) );
+
+						expect( myDocuments[ 0 ].property2.$subRelation1 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 0 ].property2.$subRelation1 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/sub-documents/sub-document1/relation-1/",
+						} ) );
+						expect( myDocuments[ 0 ].property2.$relation3 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 0 ].property2.$relation3 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/sub-documents/sub-document1/relation-3/",
+						} ) );
+
+						expect( myDocuments[ 1 ].property2.$subRelation2 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 1 ].property2.$subRelation2 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/sub-documents/sub-document2/relation-2/",
+						} ) );
+						expect( myDocuments[ 1 ].property2.$relation3 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( myDocuments[ 1 ].property2.$relation3 ).toEqual( jasmine.objectContaining( {
+							id: "https://example.com/sub-documents/sub-document2/relation-3/",
+						} ) );
+
+						done();
+					} ).catch( done.fail );
+				} );
+
 			} );
 
 			describe( "When Documents does not have a context", ():void => {
@@ -5852,8 +6346,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						expect( sendSpy ).toHaveBeenCalledWith(
 							"https://example.com/resource/", "" +
 							"CONSTRUCT {" +
-							` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+							` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 							"" + ` <${ C.target }> ?child.` +
+
+							` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+							"" + ` ?child__accessPoints__hasMemberRelation ?child__accessPoints;` +
+							"" + ` ?child__property2__accessPoints__hasMemberRelation ?child__property2__accessPoints.` +
 
 							" ?child a ?child__types;" +
 							"" + " <https://example.com/ns#property-1> ?child__property1;" +
@@ -5864,7 +6362,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + " <https://schema.org/property-3> ?child__property2__property3 " +
 
 							"} WHERE {" +
-							" BIND(BNODE() AS ?metadata)." +
+							" BIND(BNODE() AS ?queryMetadata)." +
+							" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 							" {" +
 							"" + " SELECT DISTINCT ?child WHERE {" +
@@ -5898,6 +6397,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + "" + " ?child__property2 <https://schema.org/property-3> ?child__property2__property3." +
 							"" + "" + " FILTER( datatype( ?child__property2__property3 ) = <http://www.w3.org/2001/XMLSchema#string> )" +
 							"" + " }" +
+							" }." +
+
+							" OPTIONAL {" +
+							"" + ` ?child <${ C.accessPoint }> ?child__accessPoints.` +
+							"" + ` ?child__accessPoints <${ LDP.hasMemberRelation }> ?child__accessPoints__hasMemberRelation` +
+							" }." +
+							" OPTIONAL {" +
+							"" + ` ?child__property2 <${ C.accessPoint }> ?child__property2__accessPoints.` +
+							"" + ` ?child__property2__accessPoints <${ LDP.hasMemberRelation }> ?child__property2__accessPoints__hasMemberRelation` +
+
 							" } " +
 							"}",
 
@@ -6525,7 +7034,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 					const accessPoint:BaseAccessPoint = { hasMemberRelation: "member-relation" };
 					documents.createAccessPoint( "https://example.com/parent-resource/", accessPoint ).then( ( document:AccessPoint ):void => {
-						expect( accessPoint ).toBe( document );
+						expect( accessPoint as {} ).toBe( document );
 
 						expect( Document.is( document ) ).toBe( true );
 						expect( document ).toEqual( jasmine.objectContaining( {
@@ -6836,7 +7345,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						.then( ( persistedDocuments:AccessPoint[] ):void => {
 							expect( persistedDocuments ).toEqual( new Array( 3 ).fill( jasmine.anything() ) );
 							persistedDocuments.forEach( ( document, index ) => {
-								expect( accessPoints[ index ] ).toBe( document );
+								expect( accessPoints[ index ] as {} ).toBe( document );
 
 								expect( Document.is( document ) ).toBe( true );
 								expect( document ).toEqual( jasmine.objectContaining( {
@@ -7072,13 +7581,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"https://example.com/resource/",
 
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?member.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?member__accessPoints__hasMemberRelation ?member__accessPoints.` +
 
 								" ?member a ?member__types " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?member WHERE {" +
@@ -7088,8 +7601,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"" + " }" +
 								" }." +
 
-								" OPTIONAL { ?member a ?member__types } " +
+								" OPTIONAL { ?member a ?member__types }." +
 
+								" OPTIONAL {" +
+								"" + ` ?member <${ C.accessPoint }> ?member__accessPoints.` +
+								"" + ` ?member__accessPoints <${ LDP.hasMemberRelation }> ?member__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -7313,13 +7831,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"https://example.com/resource/",
 
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?member.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?member__accessPoints__hasMemberRelation ?member__accessPoints.` +
 
 								" ?member a ?member__types " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?member WHERE {" +
@@ -7329,8 +7851,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"" + " }" +
 								" }." +
 
-								" OPTIONAL { ?member a ?member__types } " +
+								" OPTIONAL { ?member a ?member__types }." +
 
+								" OPTIONAL {" +
+								"" + ` ?member <${ C.accessPoint }> ?member__accessPoints.` +
+								"" + ` ?member__accessPoints <${ LDP.hasMemberRelation }> ?member__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -7622,8 +8149,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"https://example.com/resource/",
 							"PREFIX schema: <https://schema.org/> " +
 							"CONSTRUCT {" +
-							` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+							` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 							"" + ` <${ C.target }> ?member.` +
+
+							` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+							"" + ` ?member__accessPoints__hasMemberRelation ?member__accessPoints;` +
+							"" + ` ?member__property2__accessPoints__hasMemberRelation ?member__property2__accessPoints.` +
 
 							" ?member a ?member__types;" +
 							"" + " <https://example.com/ns#property-1> ?member__property1;" +
@@ -7634,7 +8165,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + " schema:property-3 ?member__property2__property3 " +
 
 							"} WHERE {" +
-							" BIND(BNODE() AS ?metadata)." +
+							" BIND(BNODE() AS ?queryMetadata)." +
+							" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 							" {" +
 							"" + " SELECT DISTINCT ?member WHERE {" +
@@ -7670,6 +8202,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + "" + " ?member__property2 schema:property-3 ?member__property2__property3." +
 							"" + "" + " FILTER( datatype( ?member__property2__property3 ) = <http://www.w3.org/2001/XMLSchema#string> )" +
 							"" + " }" +
+							" }." +
+
+							" OPTIONAL {" +
+							"" + ` ?member <${ C.accessPoint }> ?member__accessPoints.` +
+							"" + ` ?member__accessPoints <${ LDP.hasMemberRelation }> ?member__accessPoints__hasMemberRelation` +
+							" }." +
+							" OPTIONAL {" +
+							"" + ` ?member__property2 <${ C.accessPoint }> ?member__property2__accessPoints.` +
+							"" + ` ?member__property2__accessPoints <${ LDP.hasMemberRelation }> ?member__property2__accessPoints__hasMemberRelation` +
+
 							" } " +
 							"}",
 
@@ -7717,13 +8259,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							expect( sendSpy ).toHaveBeenCalledWith(
 								"https://example.com/resource/",
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?member.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?member__accessPoints__hasMemberRelation ?member__accessPoints.` +
 
 								" ?member___subject ?member___predicate ?member___object " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?member WHERE {" +
@@ -7735,8 +8281,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 								" GRAPH ?member {" +
 								"" + " ?member___subject ?member___predicate ?member___object" +
-								" } " +
+								" }." +
 
+								" OPTIONAL {" +
+								"" + ` ?member <${ C.accessPoint }> ?member__accessPoints.` +
+								"" + ` ?member__accessPoints <${ LDP.hasMemberRelation }> ?member__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -7790,13 +8341,17 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								"https://example.com/resource/",
 								"PREFIX schema: <https://schema.org/> " +
 								"CONSTRUCT {" +
-								` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+								` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 								"" + ` <${ C.target }> ?member.` +
+
+								` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+								"" + ` ?member__accessPoints__hasMemberRelation ?member__accessPoints.` +
 
 								" ?member ?member___predicate ?member___object " +
 
 								"} WHERE {" +
-								" BIND(BNODE() AS ?metadata)." +
+								" BIND(BNODE() AS ?queryMetadata)." +
+								" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 								" {" +
 								"" + " SELECT DISTINCT ?member WHERE {" +
@@ -7815,9 +8370,13 @@ describe( module( "carbonldp/Documents" ), ():void => {
 								" OPTIONAL {" +
 								"" + " ?member schema:property-2 ?member__property2." +
 								"" + " FILTER( datatype( ?member__property2 ) = <http://www.w3.org/2001/XMLSchema#integer> )" +
-								" }" +
+								" }." +
 
-								" " +
+								" OPTIONAL {" +
+								"" + ` ?member <${ C.accessPoint }> ?member__accessPoints.` +
+								"" + ` ?member__accessPoints <${ LDP.hasMemberRelation }> ?member__accessPoints__hasMemberRelation` +
+
+								" } " +
 								"}",
 
 								jasmine.objectContaining( {
@@ -7902,7 +8461,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 						expect( query ).toEqual( new QueryToken(
 							new ConstructToken()
-								.addTriple( new SubjectToken( variableHelper( "metadata" ) )
+								.addTriple( new SubjectToken( variableHelper( "queryMetadata" ) )
 									.addPredicate( new PredicateToken( "a" )
 										.addObject( new IRIToken( C.VolatileResource ) )
 										.addObject( new IRIToken( C.QueryMetadata ) )
@@ -7910,6 +8469,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									.addPredicate( new PredicateToken( new IRIToken( C.target ) )
 										.addObject( variableHelper( "member" ) )
 									)
+								)
+								.addTriple( new SubjectToken( variableHelper( "accessPointsMetadata" ) )
+									.addPredicate( new PredicateToken( "a" )
+										.addObject( new IRIToken( C.VolatileResource ) )
+										.addObject( new IRIToken( C.AccessPointsMetadata ) )
+									)
+									.addPredicate( new PredicateToken( variableHelper( "member__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "member__accessPoints" ) ) )
+									.addPredicate( new PredicateToken( variableHelper( "member__property2__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "member__property2__accessPoints" ) ) )
 								)
 								.addTriple( new SubjectToken( variableHelper( "member" ) )
 									.addPredicate( new PredicateToken( "a" )
@@ -7934,7 +8503,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									)
 								)
 
-								.addPattern( new BindToken( "BNODE()", variableHelper( "metadata" ) ) )
+								.addPattern( new BindToken( "BNODE()", variableHelper( "queryMetadata" ) ) )
+								.addPattern( `{ ${ new BindToken( "BNODE()", "?accessPointsMetadata" as any ) } }` as any )
 								.addPattern( new SelectToken( "DISTINCT" )
 									.addVariable( variableHelper( "member" ) )
 									.addPattern( new SubjectToken( new IRIToken( "https://example.com/resource/" ) )
@@ -8016,6 +8586,30 @@ describe( module( "carbonldp/Documents" ), ():void => {
 										)
 									)
 									.addPattern( new FilterToken( "datatype( ?member__property2__property3 ) = xsd:string" ) )
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "member" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "member__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "member__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "member__accessPoints__hasMemberRelation" ) )
+										)
+									)
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "member__property2" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "member__property2__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "member__property2__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "member__property2__accessPoints__hasMemberRelation" ) )
+										)
+									)
 								)
 							)
 
@@ -9005,8 +9599,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						expect( sendSpy ).toHaveBeenCalledWith(
 							"https://example.com/resource/", "" +
 							"CONSTRUCT {" +
-							` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+							` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 							"" + ` <${ C.target }> ?member.` +
+
+							` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+							"" + ` ?member__accessPoints__hasMemberRelation ?member__accessPoints;` +
+							"" + ` ?member__property2__accessPoints__hasMemberRelation ?member__property2__accessPoints.` +
 
 							" ?member a ?member__types;" +
 							"" + " <https://example.com/ns#property-1> ?member__property1;" +
@@ -9017,7 +9615,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + " <https://schema.org/property-3> ?member__property2__property3 " +
 
 							"} WHERE {" +
-							" BIND(BNODE() AS ?metadata)." +
+							" BIND(BNODE() AS ?queryMetadata)." +
+							" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 							" {" +
 							"" + " SELECT DISTINCT ?member WHERE {" +
@@ -9053,6 +9652,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 							"" + "" + " ?member__property2 <https://schema.org/property-3> ?member__property2__property3." +
 							"" + "" + " FILTER( datatype( ?member__property2__property3 ) = <http://www.w3.org/2001/XMLSchema#string> )" +
 							"" + " }" +
+							" }." +
+
+							" OPTIONAL {" +
+							"" + ` ?member <${ C.accessPoint }> ?member__accessPoints.` +
+							"" + ` ?member__accessPoints <${ LDP.hasMemberRelation }> ?member__accessPoints__hasMemberRelation` +
+							" }." +
+							" OPTIONAL {" +
+							"" + ` ?member__property2 <${ C.accessPoint }> ?member__property2__accessPoints.` +
+							"" + ` ?member__property2__accessPoints <${ LDP.hasMemberRelation }> ?member__property2__accessPoints__hasMemberRelation` +
+
 							" } " +
 							"}",
 
@@ -11124,7 +11733,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 						expect( query ).toEqual( new QueryToken(
 							new ConstructToken()
-								.addTriple( new SubjectToken( variableHelper( "metadata" ) )
+								.addTriple( new SubjectToken( variableHelper( "queryMetadata" ) )
 									.addPredicate( new PredicateToken( "a" )
 										.addObject( new IRIToken( C.VolatileResource ) )
 										.addObject( new IRIToken( C.QueryMetadata ) )
@@ -11132,6 +11741,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									.addPredicate( new PredicateToken( new IRIToken( C.target ) )
 										.addObject( variableHelper( "document" ) )
 									)
+								)
+								.addTriple( new SubjectToken( variableHelper( "accessPointsMetadata" ) )
+									.addPredicate( new PredicateToken( "a" )
+										.addObject( new IRIToken( C.VolatileResource ) )
+										.addObject( new IRIToken( C.AccessPointsMetadata ) )
+									)
+									.addPredicate( new PredicateToken( variableHelper( "document__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "document__accessPoints" ) ) )
+									.addPredicate( new PredicateToken( variableHelper( "document__property2__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "document__property2__accessPoints" ) ) )
 								)
 								.addTriple( new SubjectToken( variableHelper( "document" ) )
 									.addPredicate( new PredicateToken( "a" )
@@ -11162,7 +11781,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									)
 								)
 
-								.addPattern( new BindToken( "BNODE()", variableHelper( "metadata" ) ) )
+								.addPattern( new BindToken( "BNODE()", variableHelper( "queryMetadata" ) ) )
+								.addPattern( `{ ${ new BindToken( "BNODE()", "?accessPointsMetadata" as any ) } }` as any )
 								.addPattern( new ValuesToken()
 									.addValues( variableHelper( "document" ), new IRIToken( persistedDocument.id ) )
 								)
@@ -11231,6 +11851,30 @@ describe( module( "carbonldp/Documents" ), ():void => {
 											)
 										)
 										.addPattern( new FilterToken( "datatype( ?document__property1 ) = <http://www.w3.org/2001/XMLSchema#string>" ) )
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "document" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "document__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "document__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "document__accessPoints__hasMemberRelation" ) )
+										)
+									)
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "document__property2" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "document__property2__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "document__property2__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "document__property2__accessPoints__hasMemberRelation" ) )
+										)
+									)
 								)
 							)
 
@@ -11312,7 +11956,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 							expect( query ).toEqual( new QueryToken(
 								new ConstructToken()
-									.addTriple( new SubjectToken( variableHelper( "metadata" ) )
+									.addTriple( new SubjectToken( variableHelper( "queryMetadata" ) )
 										.addPredicate( new PredicateToken( "a" )
 											.addObject( new IRIToken( C.VolatileResource ) )
 											.addObject( new IRIToken( C.QueryMetadata ) )
@@ -11320,6 +11964,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 										.addPredicate( new PredicateToken( new IRIToken( C.target ) )
 											.addObject( variableHelper( "document" ) )
 										)
+									)
+									.addTriple( new SubjectToken( variableHelper( "accessPointsMetadata" ) )
+										.addPredicate( new PredicateToken( "a" )
+											.addObject( new IRIToken( C.VolatileResource ) )
+											.addObject( new IRIToken( C.AccessPointsMetadata ) )
+										)
+										.addPredicate( new PredicateToken( variableHelper( "document__accessPoints__hasMemberRelation" ) )
+											.addObject( variableHelper( "document__accessPoints" ) ) )
+										.addPredicate( new PredicateToken( variableHelper( "document__property2__accessPoints__hasMemberRelation" ) )
+											.addObject( variableHelper( "document__property2__accessPoints" ) ) )
 									)
 									.addTriple( new SubjectToken( variableHelper( "document" ) )
 										.addPredicate( new PredicateToken( "a" )
@@ -11341,7 +11995,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 										)
 									)
 
-									.addPattern( new BindToken( "BNODE()", variableHelper( "metadata" ) ) )
+									.addPattern( new BindToken( "BNODE()", variableHelper( "queryMetadata" ) ) )
+									.addPattern( `{ ${ new BindToken( "BNODE()", "?accessPointsMetadata" as any ) } }` as any )
 									.addPattern( new ValuesToken()
 										.addValues( variableHelper( "document" ), new IRIToken( persistedDocument.id ) )
 									)
@@ -11384,6 +12039,30 @@ describe( module( "carbonldp/Documents" ), ():void => {
 												)
 											)
 											.addPattern( new FilterToken( "datatype( ?document__property1 ) = <http://www.w3.org/2001/XMLSchema#string>" ) )
+									)
+									.addPattern( new OptionalToken()
+										.addPattern( new SubjectToken( variableHelper( "document" ) )
+											.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+												.addObject( variableHelper( "document__accessPoints" ) )
+											)
+										)
+										.addPattern( new SubjectToken( variableHelper( "document__accessPoints" ) )
+											.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+												.addObject( variableHelper( "document__accessPoints__hasMemberRelation" ) )
+											)
+										)
+									)
+									.addPattern( new OptionalToken()
+										.addPattern( new SubjectToken( variableHelper( "document__property2" ) )
+											.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+												.addObject( variableHelper( "document__property2__accessPoints" ) )
+											)
+										)
+										.addPattern( new SubjectToken( variableHelper( "document__property2__accessPoints" ) )
+											.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+												.addObject( variableHelper( "document__property2__accessPoints__hasMemberRelation" ) )
+											)
+										)
 									)
 								)
 
@@ -11705,6 +12384,127 @@ describe( module( "carbonldp/Documents" ), ():void => {
 					} ).catch( done.fail );
 				} );
 
+
+				it( "should refresh access points from metadata", ( done:DoneFn ):void => {
+					jasmine.Ajax.stubRequest( "https://example.com/resource/" ).andReturn( {
+						status: 200,
+						responseText: `[ {
+							"@id":"_:1",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.QueryMetadata }"
+							],
+							"${ C.target }": [ {
+								"@id":"https://example.com/resource/"
+							} ]
+						}, {
+							"@id": "_:2",
+							"@type": [
+								"${ C.ResponseMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.documentMetadata }": [ {
+								"@id": "_:3"
+							} ]
+						}, {
+							"@id": "_:3",
+							"@type": [
+								"${ C.DocumentMetadata }",
+								"${ C.VolatileResource }"
+							],
+							"${ C.eTag }": [ {
+								"@value": "\\"1-12345\\""
+							} ],
+							"${ C.relatedDocument }": [ {
+								"@id": "https://example.com/resource/"
+							} ]
+						}, {
+							"@id": "_:4",
+							"@type": [
+								"${ C.VolatileResource }",
+								"${ C.AccessPointsMetadata }"
+							],
+							"https://example.com/ns#relation-1": [ {
+								"@id": "https://example.com/resource/relation-1/"
+							} ],
+							"https://example.com/ns#relation3": {
+								"@id": "https://example.com/resource/relation-3/"
+							}
+						}, {
+							"@id": "https://example.com/resource/",
+							"@graph": [ {
+								"@id": "https://example.com/resource/",
+								"@type": [
+									"${ C.Document }",
+									"https://example.com/ns#Resource",
+									"${ LDP.BasicContainer }",
+									"${ LDP.RDFSource }"
+								]
+							} ]
+						} ]`,
+					} );
+
+					interface MyDocument {
+						$relation1?:AccessPoint;
+						$relation2?:AccessPoint;
+						$relation3?:AccessPoint;
+					}
+
+					context.extendObjectSchema( "https://example.com/ns#Resource", {
+						"relation1": {
+							"@id": "https://example.com/ns#relation-1",
+							"@type": "@id",
+							"@container": "@set",
+						},
+						"relation2": {
+							"@id": "https://example.com/ns#relation-2",
+							"@type": "@id",
+						},
+					} );
+
+					const persistedDocument:Document & MyDocument = createMockDocument( {
+						documents, props: {
+							id: "https://example.com/resource/",
+							_partialMetadata: createPartialMetadata( {
+								"@vocab": "https://example.com/ns#",
+							} ),
+							$relation1: createMockAccessPoint( {
+								documents, props: {
+									id: "https://example.com/resource/relation-1/",
+								},
+							} ),
+							$relation2: createMockAccessPoint( {
+								documents, props: {
+									id: "https://example.com/resource/relation-2/",
+								},
+							} ),
+						},
+					} );
+
+					Utils.promiseMethod( () => {
+						return documents.refresh<MyDocument>( persistedDocument );
+					} ).then( ( document ) => {
+						expect( Document.is( document ) ).toBe( true );
+
+						// Updated
+						expect( document ).toEqual( jasmine.objectContaining( {
+							$relation1: jasmine.objectContaining( { id: "https://example.com/resource/relation-1/" } ) as any,
+							$relation3: jasmine.objectContaining( { id: "https://example.com/resource/relation-3/" } ) as any,
+						} ) );
+
+						expect( document.$relation1 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+						expect( document.$relation3 ).toEqual( anyThatMatches( ProtectedDocument.is, "ProtectedDocument" ) as any );
+
+
+						// Removed
+						expect( document ).not.toEqual( jasmine.objectContaining( {
+							$relation2: jasmine.objectContaining( { id: "https://example.com/resource/relation-2/" } ) as any,
+						} ) );
+
+						done();
+					} ).catch( done.fail );
+				} );
+
 			} );
 
 			describe( "When Documents does not have a context", ():void => {
@@ -11881,7 +12681,7 @@ describe( module( "carbonldp/Documents" ), ():void => {
 
 						expect( query ).toEqual( new QueryToken(
 							new ConstructToken()
-								.addTriple( new SubjectToken( variableHelper( "metadata" ) )
+								.addTriple( new SubjectToken( variableHelper( "queryMetadata" ) )
 									.addPredicate( new PredicateToken( "a" )
 										.addObject( new IRIToken( C.VolatileResource ) )
 										.addObject( new IRIToken( C.QueryMetadata ) )
@@ -11889,6 +12689,16 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									.addPredicate( new PredicateToken( new IRIToken( C.target ) )
 										.addObject( variableHelper( "document" ) )
 									)
+								)
+								.addTriple( new SubjectToken( variableHelper( "accessPointsMetadata" ) )
+									.addPredicate( new PredicateToken( "a" )
+										.addObject( new IRIToken( C.VolatileResource ) )
+										.addObject( new IRIToken( C.AccessPointsMetadata ) )
+									)
+									.addPredicate( new PredicateToken( variableHelper( "document__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "document__accessPoints" ) ) )
+									.addPredicate( new PredicateToken( variableHelper( "document__property2__accessPoints__hasMemberRelation" ) )
+										.addObject( variableHelper( "document__property2__accessPoints" ) ) )
 								)
 								.addTriple( new SubjectToken( variableHelper( "document" ) )
 									.addPredicate( new PredicateToken( "a" )
@@ -11919,7 +12729,8 @@ describe( module( "carbonldp/Documents" ), ():void => {
 									)
 								)
 
-								.addPattern( new BindToken( "BNODE()", variableHelper( "metadata" ) ) )
+								.addPattern( new BindToken( "BNODE()", variableHelper( "queryMetadata" ) ) )
+								.addPattern( `{ ${ new BindToken( "BNODE()", "?accessPointsMetadata" as any ) } }` as any )
 								.addPattern( new ValuesToken()
 									.addValues( variableHelper( "document" ), new IRIToken( persistedDocument.id ) )
 								)
@@ -11988,6 +12799,30 @@ describe( module( "carbonldp/Documents" ), ():void => {
 											)
 										)
 										.addPattern( new FilterToken( "datatype( ?document__property1 ) = <http://www.w3.org/2001/XMLSchema#string>" ) )
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "document" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "document__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "document__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "document__accessPoints__hasMemberRelation" ) )
+										)
+									)
+								)
+								.addPattern( new OptionalToken()
+									.addPattern( new SubjectToken( variableHelper( "document__property2" ) )
+										.addPredicate( new PredicateToken( new IRIToken( C.accessPoint ) )
+											.addObject( variableHelper( "document__property2__accessPoints" ) )
+										)
+									)
+									.addPattern( new SubjectToken( variableHelper( "document__property2__accessPoints" ) )
+										.addPredicate( new PredicateToken( new IRIToken( LDP.hasMemberRelation ) )
+											.addObject( variableHelper( "document__property2__accessPoints__hasMemberRelation" ) )
+										)
+									)
 								)
 						) );
 
@@ -14789,14 +15624,18 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						"https://example.com/pointer/",
 
 						"CONSTRUCT {" +
-						` ?metadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
+						` ?queryMetadata a <${ C.VolatileResource }>, <${ C.QueryMetadata }>;` +
 						"" + ` <${ C.target }> ?document.` +
+
+						` ?accessPointsMetadata a <${ C.VolatileResource }>, <${ C.AccessPointsMetadata }>;` +
+						"" + ` ?document__accessPoints__hasMemberRelation ?document__accessPoints.` +
 
 						" ?document a ?document__types;" +
 						"" + " <https://example.com/ns#name> ?document__name " +
 
 						"} WHERE {" +
-						" BIND(BNODE() AS ?metadata)." +
+						" BIND(BNODE() AS ?queryMetadata)." +
+						" { BIND(BNODE() AS ?accessPointsMetadata) }." +
 
 						" VALUES ?document { <https://example.com/pointer/> }." +
 						" OPTIONAL { ?document a ?document__types }." +
@@ -14805,6 +15644,12 @@ describe( module( "carbonldp/Documents" ), ():void => {
 						" OPTIONAL {" +
 						"" + " ?document <https://example.com/ns#name> ?document__name." +
 						"" + " FILTER( datatype( ?document__name ) = <http://www.w3.org/2001/XMLSchema#string> )" +
+						" }." +
+
+						" OPTIONAL {" +
+						"" + ` ?document <${ C.accessPoint }> ?document__accessPoints.` +
+						"" + ` ?document__accessPoints <${ LDP.hasMemberRelation }> ?document__accessPoints__hasMemberRelation` +
+
 						" } " +
 						"}",
 

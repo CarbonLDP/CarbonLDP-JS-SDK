@@ -13,6 +13,7 @@ import { Context } from "./Context";
 import { Document } from "./Document";
 import { Documents } from "./Documents";
 import * as Errors from "./Errors";
+import { AccessPointsMetadata } from "./LDP";
 import { AddMemberAction } from "./LDP/AddMemberAction";
 import { DocumentMetadata } from "./LDP/DocumentMetadata";
 import { Error } from "./LDP/Error";
@@ -138,7 +139,7 @@ export class SDKContext implements Context {
 			const clonedSchema:ObjectSchema.DigestedObjectSchema = ObjectSchema.ObjectSchemaDigester
 				.combineDigestedObjectSchemas( [ generalSchema ] );
 
-			if( clonedSchema.vocab === null && this.settings && this.settings.vocabulary )
+			if( clonedSchema.vocab === void 0 && this.settings && this.settings.vocabulary )
 				clonedSchema.vocab = this.resolve( this.settings.vocabulary );
 
 			if( ! clonedSchema.base )
@@ -240,6 +241,7 @@ export class SDKContext implements Context {
 		this.extendObjectSchema( ValidationResult.TYPE, ValidationResult.SCHEMA );
 
 		this.extendObjectSchema( QueryMetadata.TYPE, QueryMetadata.SCHEMA );
+		this.extendObjectSchema( AccessPointsMetadata.TYPE, AccessPointsMetadata.SCHEMA );
 
 		this.extendObjectSchema( AccessPointCreated.TYPE, AccessPointCreated.SCHEMA );
 		this.extendObjectSchema( ChildCreated.TYPE, ChildCreated.SCHEMA );

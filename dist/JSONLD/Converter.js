@@ -5,7 +5,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var IllegalArgumentError_1 = require("../Errors/IllegalArgumentError");
 var Pointer_1 = require("../Pointer");
@@ -26,6 +26,14 @@ var JSONLDConverter = (function () {
         enumerable: true,
         configurable: true
     });
+    JSONLDConverter.getPropertyURINameMap = function (digestedSchema) {
+        var map = new Map();
+        digestedSchema.properties.forEach(function (definition, propertyName) {
+            var uri = ObjectSchema.ObjectSchemaUtils.resolveURI(definition.uri, digestedSchema, { vocab: true });
+            map.set(uri, propertyName);
+        });
+        return map;
+    };
     JSONLDConverter.getDefaultSerializers = function () {
         var literalSerializers = new Map();
         literalSerializers.set(XSD_1.XSD.date, XSDSerializers.dateSerializer);
@@ -169,7 +177,7 @@ var JSONLDConverter = (function () {
             throw new IllegalArgumentError_1.IllegalArgumentError("The expandedObject doesn't have an @id defined.");
         targetObject["id"] = expandedObject["@id"];
         targetObject["types"] = !!expandedObject["@type"] ? expandedObject["@type"] : [];
-        var propertyURINameMap = this.getPropertyURINameMap(digestedSchema);
+        var propertyURINameMap = JSONLDConverter.getPropertyURINameMap(digestedSchema);
         Utils.forEachOwnProperty(expandedObject, function (propertyURI, propertyValues) {
             if (propertyURI === "@id")
                 return;
@@ -179,7 +187,7 @@ var JSONLDConverter = (function () {
                 return;
             var propertyName = propertyURINameMap.has(propertyURI) ?
                 propertyURINameMap.get(propertyURI) :
-                digestedSchema.vocab !== null ?
+                Utils.isString(digestedSchema.vocab) ?
                     URI_1.URI.getRelativeURI(propertyURI, digestedSchema.vocab) :
                     propertyURI;
             var targetValue = _this.getPropertyValue(propertyName, propertyValues, digestedSchema, pointerLibrary);
@@ -231,14 +239,6 @@ var JSONLDConverter = (function () {
         if (propertyContainer === null)
             return filteredValues[0];
         return filteredValues;
-    };
-    JSONLDConverter.prototype.getPropertyURINameMap = function (digestedSchema) {
-        var map = new Map();
-        digestedSchema.properties.forEach(function (definition, propertyName) {
-            var uri = ObjectSchema.ObjectSchemaUtils.resolveURI(definition.uri, digestedSchema, { vocab: true });
-            map.set(uri, propertyName);
-        });
-        return map;
     };
     JSONLDConverter.prototype.compactPropertyLiteral = function (propertyValues, definition, digestedSchema) {
         var literalType = definition.literalType === null ?

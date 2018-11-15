@@ -19,6 +19,16 @@ export class JSONLDConverter {
 
 	get literalSerializers():Map<string, Serializer> { return this._literalSerializers; }
 
+
+	static getPropertyURINameMap( digestedSchema:ObjectSchema.DigestedObjectSchema ):Map<string, string> {
+		const map:Map<string, string> = new Map<string, string>();
+		digestedSchema.properties.forEach( ( definition:ObjectSchema.DigestedObjectSchemaProperty, propertyName:string ):void => {
+			const uri:string = ObjectSchema.ObjectSchemaUtils.resolveURI( definition.uri, digestedSchema, { vocab: true } );
+			map.set( uri, propertyName );
+		} );
+		return map;
+	}
+
 	private static getDefaultSerializers():Map<string, Serializer> {
 		let literalSerializers:Map<string, Serializer> = new Map<string, Serializer>();
 
@@ -197,7 +207,7 @@ export class JSONLDConverter {
 		targetObject[ "id" ] = expandedObject[ "@id" ];
 		targetObject[ "types" ] = ! ! expandedObject[ "@type" ] ? expandedObject[ "@type" ] : [];
 
-		const propertyURINameMap:Map<string, string> = this.getPropertyURINameMap( digestedSchema );
+		const propertyURINameMap:Map<string, string> = JSONLDConverter.getPropertyURINameMap( digestedSchema );
 		Utils.forEachOwnProperty( expandedObject, ( propertyURI:string, propertyValues:any[] ):void => {
 			if( propertyURI === "@id" ) return;
 			if( propertyURI === "@type" ) return;
@@ -206,7 +216,7 @@ export class JSONLDConverter {
 
 			const propertyName:string = propertyURINameMap.has( propertyURI ) ?
 				propertyURINameMap.get( propertyURI ) :
-				digestedSchema.vocab !== null ?
+				Utils.isString(digestedSchema.vocab ) ?
 					URI.getRelativeURI( propertyURI, digestedSchema.vocab ) :
 					propertyURI
 			;
@@ -265,15 +275,6 @@ export class JSONLDConverter {
 
 		if( propertyContainer === null ) return filteredValues[ 0 ];
 		return filteredValues;
-	}
-
-	private getPropertyURINameMap( digestedSchema:ObjectSchema.DigestedObjectSchema ):Map<string, string> {
-		const map:Map<string, string> = new Map<string, string>();
-		digestedSchema.properties.forEach( ( definition:ObjectSchema.DigestedObjectSchemaProperty, propertyName:string ):void => {
-			const uri:string = ObjectSchema.ObjectSchemaUtils.resolveURI( definition.uri, digestedSchema, { vocab: true } );
-			map.set( uri, propertyName );
-		} );
-		return map;
 	}
 
 	private compactPropertyLiteral( propertyValues:any[], definition:ObjectSchema.DigestedObjectSchemaProperty, digestedSchema:ObjectSchema.DigestedObjectSchema ):any[] {

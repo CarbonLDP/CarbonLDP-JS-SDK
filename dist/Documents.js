@@ -5,7 +5,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var tokens_1 = require("sparqler/tokens");
 var AccessPoint_1 = require("./AccessPoint");
@@ -14,6 +14,7 @@ var ACL_1 = require("./Auth/ACL");
 var User_1 = require("./Auth/User");
 var Document_1 = require("./Document");
 var Errors = __importStar(require("./Errors"));
+var Fragment_1 = require("./Fragment");
 var FreeResources_1 = require("./FreeResources");
 var Errors_1 = require("./HTTP/Errors");
 var BadResponseError_1 = require("./HTTP/Errors/ServerErrors/BadResponseError");
@@ -23,6 +24,7 @@ var Request_1 = require("./HTTP/Request");
 var Compacter_1 = require("./JSONLD/Compacter");
 var Converter_1 = require("./JSONLD/Converter");
 var Parser_1 = require("./JSONLD/Parser");
+var LDP_1 = require("./LDP");
 var AddMemberAction_1 = require("./LDP/AddMemberAction");
 var ErrorResponse_1 = require("./LDP/ErrorResponse");
 var RemoveMemberAction_1 = require("./LDP/RemoveMemberAction");
@@ -31,14 +33,12 @@ var DeltaCreator_1 = require("./LDPatch/DeltaCreator");
 var Event_1 = require("./Messaging/Event");
 var Utils_1 = require("./Messaging/Utils");
 var ObjectSchema_1 = require("./ObjectSchema");
-var Document_2 = require("./Document");
-var Fragment_1 = require("./Fragment");
-var ProtectedDocument_1 = require("./ProtectedDocument");
-var Resource_1 = require("./Resource");
 var Pointer_1 = require("./Pointer");
-var Document_3 = require("./RDF/Document");
+var ProtectedDocument_1 = require("./ProtectedDocument");
+var Document_2 = require("./RDF/Document");
 var Node_1 = require("./RDF/Node");
 var URI_1 = require("./RDF/URI");
+var Resource_1 = require("./Resource");
 var Builder_1 = require("./SPARQL/Builder");
 var PartialMetadata_1 = require("./SPARQL/QueryDocument/PartialMetadata");
 var QueryContextBuilder_1 = require("./SPARQL/QueryDocument/QueryContextBuilder");
@@ -52,7 +52,7 @@ var Service_1 = require("./SPARQL/Service");
 var Utils = __importStar(require("./Utils"));
 var Utils_3 = require("./Utils");
 var C_1 = require("./Vocabularies/C");
-var LDP_1 = require("./Vocabularies/LDP");
+var LDP_2 = require("./Vocabularies/LDP");
 var Documents = (function () {
     function Documents(context) {
         this.context = context;
@@ -145,7 +145,7 @@ var Documents = (function () {
         var pointerID = this._getPointerID(id);
         if (!pointerID)
             throw new Errors.IllegalArgumentError("Cannot register a document outside the scope of this documents instance.");
-        var persistedDocument = Document_2.Document.decorate(this.getPointer(pointerID), this);
+        var persistedDocument = Document_1.Document.decorate(this.getPointer(pointerID), this);
         return persistedDocument;
     };
     Documents.prototype.get = function (uri, optionsOrQueryBuilderFn, queryBuilderFn) {
@@ -165,7 +165,7 @@ var Documents = (function () {
         if (requestOptions === void 0) { requestOptions = {}; }
         return Utils_3.promiseMethod(function () {
             documentURI = _this._getRequestURI(documentURI);
-            _this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.RDFSource);
+            _this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.RDFSource);
             return _this._sendRequest(HTTPMethod_1.HTTPMethod.HEAD, documentURI, requestOptions);
         }).then(function () {
             return true;
@@ -286,7 +286,7 @@ var Documents = (function () {
         return Utils_3.promiseMethod(function () {
             var targetMembers = _this._parseMembers(members);
             documentURI = _this._getRequestURI(documentURI);
-            _this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.Container);
+            _this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.Container);
             Request_1.RequestUtils.setContentTypeHeader("application/ld+json", requestOptions);
             var freeResources = FreeResources_1.FreeResources.createFrom({ _documents: _this });
             freeResources.createResourceFrom(AddMemberAction_1.AddMemberAction.createFrom({ targetMembers: targetMembers }));
@@ -306,7 +306,7 @@ var Documents = (function () {
         return Utils_3.promiseMethod(function () {
             var targetMembers = _this._parseMembers(members);
             documentURI = _this._getRequestURI(documentURI);
-            _this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.Container);
+            _this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.Container);
             Request_1.RequestUtils.setContentTypeHeader("application/ld+json", requestOptions);
             var containerRetrievalPreferences = {
                 include: [C_1.C.PreferSelectedMembershipTriples],
@@ -326,7 +326,7 @@ var Documents = (function () {
         if (requestOptions === void 0) { requestOptions = {}; }
         return Utils_3.promiseMethod(function () {
             documentURI = _this._getRequestURI(documentURI);
-            _this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.Container);
+            _this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.Container);
             var containerRetrievalPreferences = {
                 include: [
                     C_1.C.PreferMembershipTriples,
@@ -348,7 +348,7 @@ var Documents = (function () {
         var _this = this;
         if (requestOptions === void 0) { requestOptions = {}; }
         return Utils_3.promiseMethod(function () {
-            if (!Document_2.Document.is(persistedDocument))
+            if (!Document_1.Document.is(persistedDocument))
                 throw new Errors.IllegalArgumentError("Provided element is not a valid persisted document.");
             Request_1.RequestUtils.setPreferredRetrieval("minimal", requestOptions);
             return _this._patchDocument(persistedDocument, requestOptions);
@@ -358,7 +358,7 @@ var Documents = (function () {
         var _this = this;
         if (requestOptions === void 0) { requestOptions = {}; }
         return Utils.promiseMethod(function () {
-            if (!Document_2.Document.is(persistedDocument))
+            if (!Document_1.Document.is(persistedDocument))
                 throw new Errors.IllegalArgumentError("Provided element is not a valid persisted document.");
             return persistedDocument.isPartial() ?
                 _this._refreshPartialDocument(persistedDocument, requestOptions) :
@@ -369,7 +369,7 @@ var Documents = (function () {
         var _this = this;
         if (requestOptions === void 0) { requestOptions = {}; }
         return Utils_3.promiseMethod(function () {
-            if (!Document_2.Document.is(persistedDocument))
+            if (!Document_1.Document.is(persistedDocument))
                 throw new Errors.IllegalArgumentError("Provided element is not a valid persisted document.");
             var cloneOptions = Request_1.RequestUtils.cloneOptions(requestOptions);
             Request_1.RequestUtils.setPreferredRetrieval(persistedDocument.isPartial() ? "minimal" : "representation", cloneOptions);
@@ -385,7 +385,7 @@ var Documents = (function () {
         if (requestOptions === void 0) { requestOptions = {}; }
         return Utils_3.promiseMethod(function () {
             documentURI = _this._getRequestURI(documentURI);
-            _this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.RDFSource);
+            _this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.RDFSource);
             return _this._sendRequest(HTTPMethod_1.HTTPMethod.DELETE, documentURI, requestOptions);
         }).then(function () {
             var pointerID = _this._getPointerID(documentURI);
@@ -582,7 +582,7 @@ var Documents = (function () {
         return this.on(Event_1.Event.MEMBER_REMOVED, uriPattern, onEvent, onError);
     };
     Documents.prototype._convertRDFDocument = function (rdfDocument, response) {
-        var documentResources = Document_3.RDFDocument.getNodes(rdfDocument)[0];
+        var documentResources = Document_2.RDFDocument.getNodes(rdfDocument)[0];
         if (documentResources.length === 0)
             throw new BadResponseError_1.BadResponseError("The RDFDocument: " + rdfDocument["@id"] + ", doesn't contain a document resource.", response);
         if (documentResources.length > 1)
@@ -632,11 +632,11 @@ var Documents = (function () {
             if (pointer.isResolved() && !pointer.isPartial())
                 return pointer;
         }
-        this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.RDFSource);
+        this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.RDFSource);
         if (this.documentsBeingResolved.has(uri))
             return this.documentsBeingResolved.get(uri);
         var promise = this
-            ._sendRequest(HTTPMethod_1.HTTPMethod.GET, uri, requestOptions, null, new Document_3.RDFDocumentParser())
+            ._sendRequest(HTTPMethod_1.HTTPMethod.GET, uri, requestOptions, null, new Document_2.RDFDocumentParser())
             .then(function (_a) {
             var rdfDocuments = _a[0], response = _a[1];
             var eTag = response.getETag();
@@ -704,10 +704,10 @@ var Documents = (function () {
     Documents.prototype._refreshFullDocument = function (persistedDocument, requestOptions) {
         var _this = this;
         var uri = this._getRequestURI(persistedDocument.id);
-        this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.RDFSource);
+        this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.RDFSource);
         Request_1.RequestUtils.setIfNoneMatchHeader(persistedDocument._eTag, requestOptions);
         return this
-            ._sendRequest(HTTPMethod_1.HTTPMethod.GET, uri, requestOptions, null, new Document_3.RDFDocumentParser())
+            ._sendRequest(HTTPMethod_1.HTTPMethod.GET, uri, requestOptions, null, new Document_2.RDFDocumentParser())
             .then(function (_a) {
             var rdfDocuments = _a[0], response = _a[1];
             if (response === null)
@@ -772,7 +772,7 @@ var Documents = (function () {
             var selectChildren = new tokens_1.SelectToken("DISTINCT")
                 .addVariable(childrenProperty.variable)
                 .addPattern(new tokens_1.SubjectToken(queryContext.compactIRI(uri))
-                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_1.LDP.contains))
+                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_2.LDP.contains))
                 .addObject(childrenProperty.variable)));
             childrenProperty.addPattern(selectChildren);
             return _this._executeQueryBuilder(uri, requestOptions, queryContext, childrenProperty, queryBuilderFn);
@@ -791,9 +791,9 @@ var Documents = (function () {
             var selectMembers = new tokens_1.SelectToken("DISTINCT")
                 .addVariable(membersProperty.variable)
                 .addPattern(new tokens_1.SubjectToken(queryContext.compactIRI(uri))
-                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_1.LDP.membershipResource))
+                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_2.LDP.membershipResource))
                 .addObject(membershipResource))
-                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_1.LDP.hasMemberRelation))
+                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_2.LDP.hasMemberRelation))
                 .addObject(hasMemberRelation)))
                 .addPattern(new tokens_1.SubjectToken(membershipResource)
                 .addPredicate(new tokens_1.PredicateToken(hasMemberRelation)
@@ -874,16 +874,40 @@ var Documents = (function () {
     };
     Documents.prototype._executeConstructPatterns = function (uri, requestOptions, queryContext, targetName, constructPatterns, targetDocument) {
         var _this = this;
-        var metadataVar = queryContext.getVariable("metadata");
+        var queryMetadata = queryContext.getVariable("queryMetadata");
+        var accessPointsMetadata = queryContext.getVariable("accessPointsMetadata");
         var construct = (_a = new tokens_1.ConstructToken()
-            .addTriple(new tokens_1.SubjectToken(metadataVar)
+            .addTriple(new tokens_1.SubjectToken(queryMetadata)
             .addPredicate(new tokens_1.PredicateToken("a")
             .addObject(queryContext.compactIRI(C_1.C.VolatileResource))
             .addObject(queryContext.compactIRI(C_1.C.QueryMetadata)))
             .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(C_1.C.target))
             .addObject(queryContext.getVariable(targetName))))
-            .addPattern(new tokens_1.BindToken("BNODE()", metadataVar))).addPattern.apply(_a, constructPatterns);
+            .addPattern(new tokens_1.BindToken("BNODE()", queryMetadata))
+            .addPattern("{ " + new tokens_1.BindToken("BNODE()", accessPointsMetadata) + " }")).addPattern.apply(_a, constructPatterns);
         var query = (_b = new tokens_1.QueryToken(construct)).addPrologues.apply(_b, queryContext.getPrologues());
+        var accessPointsTriple = new tokens_1.SubjectToken(accessPointsMetadata)
+            .addPredicate(new tokens_1.PredicateToken("a")
+            .addObject(queryContext.compactIRI(C_1.C.VolatileResource))
+            .addObject(queryContext.compactIRI(C_1.C.AccessPointsMetadata)));
+        construct.addTriple(accessPointsTriple);
+        Utils_2.getResourcesVariables(constructPatterns)
+            .forEach(function (resource) {
+            var name = resource.name.replace(/__/g, ".");
+            var accessPoints = queryContext.getVariable(name + ".accessPoints");
+            var relation = queryContext.getVariable(name + ".accessPoints.hasMemberRelation");
+            construct
+                .addPattern(new tokens_1.OptionalToken()
+                .addPattern(new tokens_1.SubjectToken(resource)
+                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(C_1.C.accessPoint))
+                .addObject(accessPoints)))
+                .addPattern(new tokens_1.SubjectToken(accessPoints)
+                .addPredicate(new tokens_1.PredicateToken(queryContext.compactIRI(LDP_2.LDP.hasMemberRelation))
+                .addObject(relation))));
+            accessPointsTriple
+                .addPredicate(new tokens_1.PredicateToken(relation)
+                .addObject(accessPoints));
+        });
         var triples = Utils_2.getAllTriples(constructPatterns);
         construct.addTriple.apply(construct, triples);
         Request_1.RequestUtils.setRetrievalPreferences({ include: [C_1.C.PreferResultsContext] }, requestOptions);
@@ -892,19 +916,13 @@ var Documents = (function () {
             .then(function (jsonldString) {
             return new Parser_1.JSONLDParser().parse(jsonldString);
         }).then(function (rdfNodes) {
-            var freeNodes = Node_1.RDFNode.getFreeNodes(rdfNodes);
-            var freeResources = _this._getFreeResources(freeNodes);
-            var targetSet = new Set(freeResources
-                .getResources()
-                .filter(QueryMetadata_1.QueryMetadata.is)
-                .map(function (x) { return _this.context ? x.target : x[C_1.C.target]; })
-                .reduce(function (targets, currentTargets) { return targets.concat(currentTargets); }, [])
-                .map(function (x) { return x.id; }));
             var targetETag = targetDocument && targetDocument._eTag;
             if (targetDocument)
                 targetDocument._eTag = void 0;
+            var freeResources = _this
+                ._getFreeResources(Node_1.RDFNode.getFreeNodes(rdfNodes))
+                .getResources();
             freeResources
-                .getResources()
                 .filter(ResponseMetadata_1.ResponseMetadata.is)
                 .map(function (responseMetadata) { return responseMetadata.documentsMetadata || responseMetadata[C_1.C.documentMetadata]; })
                 .map(function (documentsMetadata) { return Array.isArray(documentsMetadata) ? documentsMetadata : [documentsMetadata]; })
@@ -924,23 +942,32 @@ var Documents = (function () {
             if (targetDocument && targetETag === targetDocument._eTag)
                 return [targetDocument];
             var rdfDocuments = rdfNodes
-                .filter(Document_3.RDFDocument.is);
+                .filter(Document_2.RDFDocument.is);
+            var targetSet = new Set(freeResources
+                .filter(QueryMetadata_1.QueryMetadata.is)
+                .map(function (x) { return _this.context ? x.target : x[C_1.C.target]; })
+                .reduce(function (targets, currentTargets) { return targets.concat(currentTargets); }, [])
+                .map(function (x) { return x.id; }));
             var targetDocuments = rdfDocuments
                 .filter(function (x) { return targetSet.has(x["@id"]); });
-            return new Compacter_1.JSONLDCompacter(_this, targetName, queryContext)
+            var documents = new Compacter_1.JSONLDCompacter(_this, targetName, queryContext)
                 .compactDocuments(rdfDocuments, targetDocuments);
+            var accessPointsMetadatas = freeResources
+                .filter(LDP_1.AccessPointsMetadata.is);
+            _this._applyAccessPointsMetadatas(accessPointsMetadatas);
+            return documents;
         });
         var _a, _b;
     };
     Documents.prototype._persistChildDocument = function (parentURI, childObject, slug, requestOptions) {
-        if (Document_2.Document.is(childObject))
+        if (Document_1.Document.is(childObject))
             throw new Errors.IllegalArgumentError("The child provided has been already persisted.");
         var childDocument = Document_1.TransientDocument.is(childObject) ? childObject : Document_1.TransientDocument.createFrom(childObject);
-        this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.Container);
+        this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.Container);
         return this._persistDocument(parentURI, slug, childDocument, requestOptions);
     };
     Documents.prototype._persistAccessPoint = function (documentURI, accessPoint, slug, requestOptions) {
-        if (Document_2.Document.is(accessPoint))
+        if (Document_1.Document.is(accessPoint))
             throw new Errors.IllegalArgumentError("The access-point provided has been already persisted.");
         var accessPointDocument = AccessPoint_1.TransientAccessPoint.is(accessPoint) ?
             accessPoint : AccessPoint_1.TransientAccessPoint.createFrom(accessPoint);
@@ -948,7 +975,7 @@ var Documents = (function () {
             accessPointDocument.membershipResource = this.getPointer(documentURI);
         else if (accessPointDocument.membershipResource.id !== documentURI)
             throw new Errors.IllegalArgumentError("The documentURI must be the same as the accessPoint's membershipResource.");
-        this._setDefaultRequestOptions(requestOptions, LDP_1.LDP.RDFSource);
+        this._setDefaultRequestOptions(requestOptions, LDP_2.LDP.RDFSource);
         return this._persistDocument(documentURI, slug, accessPointDocument, requestOptions);
     };
     Documents.prototype._persistDocument = function (parentURI, slug, document, requestOptions) {
@@ -1162,7 +1189,7 @@ var Documents = (function () {
             var preferenceHeader = response.getHeader("Preference-Applied");
             if (preferenceHeader === null || preferenceHeader.toString() !== "return=representation")
                 return persistedProtectedDocument;
-            var rdfDocuments = Document_3.RDFDocument.getDocuments(expandedResult);
+            var rdfDocuments = Document_2.RDFDocument.getDocuments(expandedResult);
             return _this._updateFromPreferenceApplied(persistedProtectedDocument, rdfDocuments, response);
         });
     };
@@ -1183,6 +1210,81 @@ var Documents = (function () {
             }
             document_1._syncSavedFragments();
         }
+    };
+    Documents.prototype._applyAccessPointsMetadatas = function (accessPointsMetadatas) {
+        var _this = this;
+        if (!accessPointsMetadatas.length)
+            return;
+        var getResourcesData = this
+            ._createMembershipResourceDataGetter();
+        accessPointsMetadatas.forEach(function (metadata) {
+            var relationURIs = Object.keys(metadata);
+            relationURIs.forEach(function (relationURI) {
+                var pointers = Array.isArray(metadata[relationURI]) ?
+                    metadata[relationURI] : [metadata[relationURI]];
+                var compactRelation = function (schema, uris) {
+                    if (uris.has(relationURI))
+                        return uris.get(relationURI);
+                    if (schema.vocab)
+                        return URI_1.URI.getRelativeURI(relationURI, schema.vocab);
+                    return relationURI;
+                };
+                pointers.forEach(function (pointer) {
+                    var resourceURI = pointer.id
+                        .split("/")
+                        .slice(0, -2)
+                        .concat("")
+                        .join("/");
+                    var _a = getResourcesData(resourceURI), resource = _a.resource, schema = _a.schema, uris = _a.uris;
+                    var relationName = compactRelation(schema, uris);
+                    var accessPoint = ProtectedDocument_1.ProtectedDocument
+                        .decorate(pointer, _this);
+                    Object.defineProperty(resource, "$" + relationName, {
+                        enumerable: false,
+                        configurable: true,
+                        value: accessPoint,
+                    });
+                });
+            });
+        });
+    };
+    Documents.prototype._createMembershipResourceGetter = function () {
+        var _this = this;
+        var resources = new Map();
+        return function (resourceURI) {
+            if (resources.has(resourceURI))
+                return resources.get(resourceURI);
+            var resource = _this.register(resourceURI);
+            Object
+                .getOwnPropertyNames(resource)
+                .filter(function (key) { return key.startsWith("$"); })
+                .filter(function (key) { return !resource.propertyIsEnumerable(key); })
+                .forEach(function (key) { return delete resource[key]; });
+            resources.set(resourceURI, resource);
+            return resource;
+        };
+    };
+    Documents.prototype._createMembershipResourceDataGetter = function () {
+        var _this = this;
+        var getResource = this
+            ._createMembershipResourceGetter();
+        var resourcesData = new Map();
+        return function (resourceURI) {
+            if (resourcesData.has(resourceURI))
+                return resourcesData.get(resourceURI);
+            var resource = getResource(resourceURI);
+            var schema = _this._getDigestedObjectSchema(resource.types, resource.id);
+            if (resource.isPartial())
+                ObjectSchema_1.ObjectSchemaDigester._combineSchemas([schema, resource._partialMetadata.schema]);
+            var uris = Converter_1.JSONLDConverter.getPropertyURINameMap(schema);
+            var resourceData = {
+                resource: resource,
+                schema: schema,
+                uris: uris,
+            };
+            resourcesData.set(resourceURI, resourceData);
+            return resourceData;
+        };
     };
     Documents.prototype._sendRequest = function (method, uri, options, body, parser) {
         return Request_1.RequestService.send(method, uri, body || null, options, parser)

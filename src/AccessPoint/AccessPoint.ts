@@ -8,13 +8,13 @@ import {
 
 
 export interface AccessPoint extends ProtectedDocument {
-	membershipResource:Pointer;
-	hasMemberRelation:Pointer;
+	membershipResource?:Pointer;
+	hasMemberRelation?:Pointer;
 	isMemberOfRelation?:Pointer;
 	insertedContentRelation?:Pointer;
 }
 
-export interface AccessPointFactory extends TransientAccessPointFactory {
+export interface AccessPointFactory extends Pick<TransientAccessPointFactory, Exclude<keyof TransientAccessPointFactory, "is">> {
 	TYPE:C[ "AccessPoint" ];
 
 	is( value:any ):value is AccessPoint;

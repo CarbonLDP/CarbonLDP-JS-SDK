@@ -1,4 +1,4 @@
-import { PatternToken, SubjectToken } from "sparqler/tokens";
+import { PatternToken, SubjectToken, VariableToken } from "sparqler/tokens";
 import { DigestedObjectSchemaProperty } from "../../ObjectSchema";
 import { QueryContext } from "./QueryContext";
 export declare function getLevelRegExp(property: string): RegExp;
@@ -9,5 +9,6 @@ export declare function createAllPattern(context: QueryContext, resourcePath: st
 export declare function getParentPath(path: string): string;
 export declare function isFullTriple(triple: SubjectToken): boolean;
 export declare function getAllTriples(patterns: PatternToken[]): SubjectToken[];
+export declare function getResourcesVariables(patterns: PatternToken[]): VariableToken[];
 export declare function getPathProperty(element: any, path: string): any;
 export declare function areDifferentType(a: any, b: any): boolean;

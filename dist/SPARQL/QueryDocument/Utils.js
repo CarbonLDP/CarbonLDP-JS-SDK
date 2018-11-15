@@ -95,6 +95,26 @@ function getSubject(subjectsMap, original) {
     subjectsMap.set(subjectStr, subject);
     return subject;
 }
+function getResourcesVariables(patterns) {
+    var resourcesVariables = new Set();
+    patterns.forEach(function (pattern) {
+        if (pattern.token === "optional")
+            getResourcesVariables(pattern.patterns)
+                .forEach(resourcesVariables.add, resourcesVariables);
+        if (pattern.token === "graph" && pattern.graph.token === "variable")
+            resourcesVariables.add(pattern.graph);
+        if (pattern.token !== "subject")
+            return;
+        if (pattern.subject.token !== "variable")
+            return;
+        var predicate = pattern.predicates
+            .find(function (p) { return p.predicate === "a" || p.predicate.token === "variable"; });
+        if (predicate)
+            resourcesVariables.add(pattern.subject);
+    });
+    return Array.from(resourcesVariables);
+}
+exports.getResourcesVariables = getResourcesVariables;
 function getPathProperty(element, path) {
     if (element === void 0 || !path)
         return element;

@@ -5,6 +5,7 @@ import {
 	interfaze,
 	module,
 	OBLIGATORY,
+	OPTIONAL,
 	property,
 	STATIC,
 } from "../test/JasmineExtender";
@@ -21,28 +22,28 @@ describe( module( "carbonldp/AccessPoint" ), ():void => {
 		it( extendsClass( "CarbonLDP.ProtectedDocument" ), ():void => {} );
 
 		it( hasProperty(
-			OBLIGATORY,
+			OPTIONAL,
 			"membershipResource",
 			"CarbonLDP.Pointer",
 			"The membership resource the access point belongs to."
 		), ():void => {} );
 
 		it( hasProperty(
-			OBLIGATORY,
+			OPTIONAL,
 			"hasMemberRelation",
 			"CarbonLDP.Pointer",
 			"The member relation of the access point manages."
 		), ():void => {} );
 
 		it( hasProperty(
-			OBLIGATORY,
+			OPTIONAL,
 			"isMemberOfRelation",
 			"CarbonLDP.Pointer",
 			"The inverted relation of the access point."
 		), ():void => {} );
 
 		it( hasProperty(
-			OBLIGATORY,
+			OPTIONAL,
 			"insertedContentRelation",
 			"CarbonLDP.Pointer",
 			"The inserted content relation of the access point."

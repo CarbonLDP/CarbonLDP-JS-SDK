@@ -5,6 +5,7 @@ import * as ObjectSchema from "./../ObjectSchema";
 export declare class JSONLDConverter {
     private _literalSerializers;
     readonly literalSerializers: Map<string, Serializer>;
+    static getPropertyURINameMap(digestedSchema: ObjectSchema.DigestedObjectSchema): Map<string, string>;
     private static getDefaultSerializers();
     constructor(literalSerializers?: Map<string, Serializer>);
     compact(expandedObjects: Object[], targetObjects: Object[], digestedSchema: ObjectSchema.DigestedObjectSchema, pointerLibrary: PointerLibrary): Object[];
@@ -25,6 +26,5 @@ export declare class JSONLDConverter {
     private compactSingle(expandedObject, targetObject, digestedSchema, pointerLibrary, strict?);
     private getPropertyContainerType(propertyValues);
     private getPropertyValue(propertyName, propertyValues, digestedSchema, pointerLibrary);
-    private getPropertyURINameMap(digestedSchema);
     private compactPropertyLiteral(propertyValues, definition, digestedSchema);
 }

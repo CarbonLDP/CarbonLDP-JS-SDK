@@ -5,7 +5,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Auth = __importStar(require("./Auth"));
 var ACE_1 = require("./Auth/ACE");
@@ -20,6 +20,7 @@ var UsernameAndPasswordCredentials_1 = require("./Auth/UsernameAndPasswordCreden
 var Document_1 = require("./Document");
 var Documents_1 = require("./Documents");
 var Errors = __importStar(require("./Errors"));
+var LDP_1 = require("./LDP");
 var AddMemberAction_1 = require("./LDP/AddMemberAction");
 var DocumentMetadata_1 = require("./LDP/DocumentMetadata");
 var Error_1 = require("./LDP/Error");
@@ -108,7 +109,7 @@ var SDKContext = (function () {
             var generalSchema = this.generalObjectSchema || this.parentContext.getObjectSchema();
             var clonedSchema = ObjectSchema.ObjectSchemaDigester
                 .combineDigestedObjectSchemas([generalSchema]);
-            if (clonedSchema.vocab === null && this.settings && this.settings.vocabulary)
+            if (clonedSchema.vocab === void 0 && this.settings && this.settings.vocabulary)
                 clonedSchema.vocab = this.resolve(this.settings.vocabulary);
             if (!clonedSchema.base)
                 clonedSchema.base = this.baseURI;
@@ -198,6 +199,7 @@ var SDKContext = (function () {
         this.extendObjectSchema(ValidationReport_1.ValidationReport.TYPE, ValidationReport_1.ValidationReport.SCHEMA);
         this.extendObjectSchema(ValidationResult_1.ValidationResult.TYPE, ValidationResult_1.ValidationResult.SCHEMA);
         this.extendObjectSchema(QueryMetadata_1.QueryMetadata.TYPE, QueryMetadata_1.QueryMetadata.SCHEMA);
+        this.extendObjectSchema(LDP_1.AccessPointsMetadata.TYPE, LDP_1.AccessPointsMetadata.SCHEMA);
         this.extendObjectSchema(AccessPointCreated_1.AccessPointCreated.TYPE, AccessPointCreated_1.AccessPointCreated.SCHEMA);
         this.extendObjectSchema(ChildCreated_1.ChildCreated.TYPE, ChildCreated_1.ChildCreated.SCHEMA);
         this.extendObjectSchema(DocumentCreatedDetails_1.DocumentCreatedDetails.TYPE, DocumentCreatedDetails_1.DocumentCreatedDetails.SCHEMA);

@@ -218,7 +218,7 @@ describe( module( "carbonldp/ObjectSchema" ), ():void => {
 		), ():void => {
 			const digestedSchema:ObjectSchema.DigestedObjectSchema = createSchema();
 
-			expect( digestedSchema.vocab ).toBeNull();
+			expect( digestedSchema.vocab ).toBeUndefined();
 		} );
 
 		it( hasProperty(

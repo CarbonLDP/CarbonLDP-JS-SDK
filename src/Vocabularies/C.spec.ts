@@ -45,6 +45,15 @@ describe( module( "carbonldp/Vocabularies/C" ), ():void => {
 
 		it( hasProperty(
 			OBLIGATORY,
+			"AccessPointsMetadata",
+			"https://carbonldp.com/ns/v1/platform#AccessPointsMetadata"
+		), ():void => {
+			const target:C[ "AccessPointsMetadata" ] = "https://carbonldp.com/ns/v1/platform#AccessPointsMetadata";
+			expect( target ).toBeDefined();
+		} );
+
+		it( hasProperty(
+			OBLIGATORY,
 			"AddMemberAction",
 			"https://carbonldp.com/ns/v1/platform#AddMemberAction"
 		), ():void => {
@@ -581,7 +590,7 @@ describe( module( "carbonldp/Vocabularies/C" ), ():void => {
 		} );
 
 		it( "should test all exported IRIs", ():void => {
-			expect( Object.keys( C ).length ).toBe( 62 );
+			expect( Object.keys( C ).length ).toBe( 63 );
 		} );
 
 		it( "C.namespace", ():void => {
@@ -597,6 +606,11 @@ describe( module( "carbonldp/Vocabularies/C" ), ():void => {
 		it( "C.AccessPointCreated", ():void => {
 			expect( C.AccessPointCreated ).toEqual( jasmine.any( String ) );
 			expect( C.AccessPointCreated ).toBe( "https://carbonldp.com/ns/v1/platform#AccessPointCreated" );
+		} );
+
+		it( "C.AccessPointsMetadata", ():void => {
+			expect( C.AccessPointsMetadata ).toEqual( jasmine.any( String ) );
+			expect( C.AccessPointsMetadata ).toBe( "https://carbonldp.com/ns/v1/platform#AccessPointsMetadata" );
 		} );
 
 		it( "C.AddMemberAction", ():void => {

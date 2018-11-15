@@ -1,6 +1,7 @@
 import { QueryClause } from "sparqler/clauses";
-import { BaseAccessPoint } from "./AccessPoint";
+import { AccessPoint, BaseAccessPoint } from "./AccessPoint";
 import { Context } from "./Context";
+import { Document } from "./Document";
 import { FreeResources } from "./FreeResources";
 import { GETOptions, RequestOptions } from "./HTTP/Request";
 import { Response } from "./HTTP/Response";
@@ -15,10 +16,8 @@ import { EventMessage } from "./Messaging/EventMessage";
 import { MemberAdded } from "./Messaging/MemberAdded";
 import { MemberRemoved } from "./Messaging/MemberRemoved";
 import { DigestedObjectSchema, ObjectSchemaResolver } from "./ObjectSchema";
-import { AccessPoint } from "./AccessPoint";
-import { Document } from "./Document";
-import { ProtectedDocument } from "./ProtectedDocument";
 import { Pointer, PointerLibrary, PointerValidator } from "./Pointer";
+import { ProtectedDocument } from "./ProtectedDocument";
 import { RDFDocument } from "./RDF/Document";
 import { RDFNode } from "./RDF/Node";
 import { FinishSPARQLSelect } from "./SPARQL/Builder";
@@ -148,6 +147,9 @@ export declare class Documents implements PointerLibrary, PointerValidator, Obje
     private _parseMembers(pointers);
     private _applyResponseData<T>(persistedProtectedDocument, response);
     private _applyNodeMap(freeNodes);
+    private _applyAccessPointsMetadatas(accessPointsMetadatas);
+    private _createMembershipResourceGetter();
+    private _createMembershipResourceDataGetter();
     private _sendRequest(method, uri, options, body?);
     private _sendRequest<T>(method, uri, options, body?, parser?);
 }
