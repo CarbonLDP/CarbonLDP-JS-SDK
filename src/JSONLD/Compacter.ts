@@ -3,18 +3,19 @@ import {
 	DigestedObjectSchema,
 	ObjectSchemaResolver,
 } from "../ObjectSchema";
-import { Document } from "../Document";
-import { Resource } from "../Resource";
+import { Document }from "../Document";
+import { Resource }from "../Resource";
 import {
 	Pointer,
 	PointerLibrary,
 } from "../Pointer";
-import { RDFDocument } from "../RDF/Document";
-import { RDFNode } from "../RDF/Node";
+import { RDFDocument }from "../RDF/Document";
+import { RDFNode }from "../RDF/Node";
 import { PartialMetadata } from "../SPARQL/QueryDocument/PartialMetadata";
 import { QueryContextBuilder } from "../SPARQL/QueryDocument/QueryContextBuilder";
 import { QueryPropertyType } from "../SPARQL/QueryDocument/QueryProperty";
 import { JSONLDConverter } from "./Converter";
+
 
 interface CompactionNode {
 	paths:string[];
@@ -44,7 +45,9 @@ export class JSONLDCompacter {
 		return this.compactDocuments<T>( rdfDocuments )[ 0 ];
 	}
 
-	compactDocuments<T extends Document>( rdfDocuments:RDFDocument[], mainDocuments:RDFDocument[] = rdfDocuments ):T[] {
+	compactDocuments<T extends Document>( rdfDocuments:RDFDocument[], mainDocuments?:RDFDocument[] ):T[] {
+		if( ! mainDocuments || ! mainDocuments.length ) mainDocuments = rdfDocuments;
+
 		rdfDocuments.forEach( rdfDocument => {
 			const [ [ documentNode ], fragmentNodes ] = RDFDocument.getNodes( rdfDocument );
 			const targetDocument:Document = this.getResource( documentNode, this.documents, true );

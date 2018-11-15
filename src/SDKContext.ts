@@ -1,10 +1,19 @@
 import * as Auth from "./Auth";
+import {
+	CompleteACReport,
+	DetailedUserACReport,
+	GrantingStep,
+	PermissionReport,
+	SimpleUserACReport,
+	SubjectReport
+} from "./Auth";
 import { ACE } from "./Auth/ACE";
 import { ACL } from "./Auth/ACL";
 import { AuthenticatedUserInformationAccessor } from "./Auth/AuthenticatedUserInformationAccessor";
 import { AuthenticatedUserMetadata } from "./Auth/AuthenticatedUserMetadata";
-import { CredentialsSet } from "./Auth/CredentialsSet";
+import { CredentialSet } from "./Auth/CredentialSet";
 import { LDAPCredentials } from "./Auth/LDAPCredentials";
+import { PasswordSecret } from "./Auth/PasswordSecret";
 import { AuthService } from "./Auth/Service";
 import { TokenCredentials } from "./Auth/TokenCredentials";
 import { User } from "./Auth/User";
@@ -232,9 +241,17 @@ export class SDKContext implements Context {
 		this.extendObjectSchema( AuthenticatedUserMetadata.TYPE, AuthenticatedUserMetadata.SCHEMA );
 		this.extendObjectSchema( User.TYPE, User.SCHEMA );
 		this.extendObjectSchema( TokenCredentials.TYPE, TokenCredentials.SCHEMA );
-		this.extendObjectSchema( CredentialsSet.TYPE, CredentialsSet.SCHEMA );
+		this.extendObjectSchema( CredentialSet.TYPE, CredentialSet.SCHEMA );
 		this.extendObjectSchema( UsernameAndPasswordCredentials.TYPE, UsernameAndPasswordCredentials.SCHEMA );
 		this.extendObjectSchema( LDAPCredentials.TYPE, LDAPCredentials.SCHEMA );
+		this.extendObjectSchema( PasswordSecret.TYPE, PasswordSecret.SCHEMA );
+
+		this.extendObjectSchema( SimpleUserACReport.TYPE, SimpleUserACReport.SCHEMA );
+		this.extendObjectSchema( DetailedUserACReport.TYPE, DetailedUserACReport.SCHEMA );
+		this.extendObjectSchema( PermissionReport.TYPE, PermissionReport.SCHEMA );
+		this.extendObjectSchema( GrantingStep.TYPE, GrantingStep.SCHEMA );
+		this.extendObjectSchema( CompleteACReport.TYPE, CompleteACReport.SCHEMA );
+		this.extendObjectSchema( SubjectReport.TYPE, SubjectReport.SCHEMA );
 
 		this.extendObjectSchema( ValidationReport.TYPE, ValidationReport.SCHEMA );
 		this.extendObjectSchema( ValidationResult.TYPE, ValidationResult.SCHEMA );

@@ -6,15 +6,10 @@ var SCHEMA = {
         "@id": Vocabularies_1.CS.user,
         "@type": "@id",
     },
-    "credentials": {
-        "@id": Vocabularies_1.CS.credentials,
-        "@type": "@id",
-        "@container": "@set",
-    },
 };
-exports.CredentialsSet = {
-    TYPE: Vocabularies_1.CS.CredentialsSet,
+exports.CredentialSet = {
+    TYPE: Vocabularies_1.CS.CredentialSet,
     SCHEMA: SCHEMA,
 };
 
-//# sourceMappingURL=CredentialsSet.js.map
+//# sourceMappingURL=CredentialSet.js.map

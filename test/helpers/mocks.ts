@@ -2,20 +2,19 @@ import { AbstractContext } from "../../src/AbstractContext";
 import {
 	Authenticator,
 	AuthService,
-	User,
 	TransientUser,
+	User,
 } from "../../src/Auth";
 import { Context } from "../../src/Context";
 import { Pointer } from "../../src/Pointer";
+import { ProtectedDocument } from "../../src/ProtectedDocument";
 
 
 export function createMockUser( context:Context ):User {
 	const pointer:Pointer = context.documents.getPointer( "https://example.com/users/my-user/" );
 
-	return User.decorate( Object.assign( pointer, {
+	return ProtectedDocument.decorate( Object.assign( pointer, {
 		types: [ TransientUser.TYPE ],
-		username: null,
-		enabled: true,
 		name: null,
 	} ), context.documents );
 }

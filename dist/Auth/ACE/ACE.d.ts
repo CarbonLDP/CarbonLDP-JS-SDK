@@ -1,15 +1,17 @@
 import { ModelSchema } from "../../core/ModelSchema";
-import { Fragment } from "../../Fragment";
 import { ObjectSchema } from "../../ObjectSchema";
+import { Pointer } from "../../Pointer";
+import { TransientResource } from "../../Resource";
 import { CS } from "../../Vocabularies";
-import { ACL } from "../ACL";
-import { TransientACE, TransientACEFactory } from "./TransientACE";
-export interface ACE extends TransientACE, Fragment {
-    _document: ACL;
+import { BaseACE } from "./BaseACE";
+export interface ACE extends TransientResource {
+    subject: Pointer;
+    permissions: Pointer[];
 }
-export interface ACEFactory extends ModelSchema, TransientACEFactory {
+export interface ACEFactory extends ModelSchema {
     TYPE: CS["AccessControlEntry"];
     SCHEMA: ObjectSchema;
-    is(value: any): value is ACE;
+    create<T extends object>(data: T & BaseACE): T & ACE;
+    createFrom<T extends object>(object: T & BaseACE): T & ACE;
 }
 export declare const ACE: ACEFactory;

@@ -7,8 +7,10 @@ import { QuerySchemaProperty } from "./QuerySchemaProperty";
 import { QueryValue } from "./QueryValue";
 export declare class QueryDocumentBuilder {
     static readonly ALL: Readonly<{}>;
+    static readonly FULL: Readonly<{}>;
     inherit: Readonly<{}>;
     all: Readonly<{}>;
+    full: Readonly<{}>;
     readonly _context: QueryContextBuilder;
     protected _document: QueryProperty;
     private _typesTriple;

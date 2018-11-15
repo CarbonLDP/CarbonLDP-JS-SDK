@@ -10,6 +10,7 @@ import {
 } from "../HTTP";
 import { BadResponseError } from "../HTTP/Errors";
 import { JSONLDParser } from "../JSONLD";
+import { ProtectedDocument } from "../ProtectedDocument";
 import { RDFDocument } from "../RDF/Document";
 import { promiseMethod } from "../Utils";
 import { LDP } from "../Vocabularies/LDP";
@@ -71,12 +72,18 @@ export abstract class Authenticator<T extends object, W extends object> {
 		} ).then( ( [ rdfData, response ] ) => {
 			const accessor:AuthenticatedUserInformationAccessor = this._parseRDFMetadata( rdfData, response, requestOptions );
 
-			this._authenticatedUser = accessor
-				.authenticatedUserMetadata
-				.user;
+			// TODO: Remove decoration when #260 merged
+			this._authenticatedUser = ProtectedDocument.decorate(
+				accessor
+					.authenticatedUserMetadata
+					.user,
+				this.context.documents
+			);
 
-			return User
-				.decorate( this._authenticatedUser, this.context.documents );
+			this._authenticatedUser
+				.addType( User.TYPE );
+
+			return this._authenticatedUser;
 		} );
 	}
 

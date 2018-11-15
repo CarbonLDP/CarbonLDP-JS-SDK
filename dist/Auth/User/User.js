@@ -14,21 +14,14 @@ exports.User = {
             "@id": Vocabularies_1.CS.credentials,
             "@type": "@id",
         },
-    },
-    isDecorated: function (object) {
-        return ProtectedDocument_1.ProtectedDocument.isDecorated(object)
-            && TransientUser_1.TransientUser.isDecorated(object);
+        "credentialSet": {
+            "@id": Vocabularies_1.CS.credentialSet,
+            "@type": "@id",
+        },
     },
     is: function (value) {
-        return TransientUser_1.TransientUser.isDecorated(value)
-            && ProtectedDocument_1.ProtectedDocument.is(value);
-    },
-    decorate: function (object, documents) {
-        TransientUser_1.TransientUser.decorate(object);
-        ProtectedDocument_1.ProtectedDocument.decorate(object, documents);
-        var persistedUser = object;
-        persistedUser.addType(TransientUser_1.TransientUser.TYPE);
-        return persistedUser;
+        return ProtectedDocument_1.ProtectedDocument.is(value)
+            && value.hasType(exports.User.TYPE);
     },
     create: TransientUser_1.TransientUser.create,
     createFrom: TransientUser_1.TransientUser.createFrom,

@@ -152,8 +152,6 @@ export class Documents implements PointerLibrary, PointerValidator, ObjectSchema
 		} else {
 			decorators
 				.set( ProtectedDocument.TYPE, ProtectedDocument.decorate )
-				.set( User.TYPE, User.decorate )
-				.set( ACL.TYPE, ACL.decorate )
 				.set( Auth.Role.RDF_CLASS, Auth.PersistedRole.Factory.decorate )
 			;
 		}

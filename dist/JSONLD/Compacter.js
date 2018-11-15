@@ -21,7 +21,8 @@ var JSONLDCompacter = (function () {
     };
     JSONLDCompacter.prototype.compactDocuments = function (rdfDocuments, mainDocuments) {
         var _this = this;
-        if (mainDocuments === void 0) { mainDocuments = rdfDocuments; }
+        if (!mainDocuments || !mainDocuments.length)
+            mainDocuments = rdfDocuments;
         rdfDocuments.forEach(function (rdfDocument) {
             var _a = Document_2.RDFDocument.getNodes(rdfDocument), documentNode = _a[0][0], fragmentNodes = _a[1];
             var targetDocument = _this.getResource(documentNode, _this.documents, true);

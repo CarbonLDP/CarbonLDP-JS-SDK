@@ -1,9 +1,9 @@
 import { VolatileResource } from "../LDP";
 import { ObjectSchema } from "../ObjectSchema";
+import { Pointer } from "../Pointer";
 import { CS } from "../Vocabularies";
-import { User } from "./User";
 export interface AuthenticatedUserMetadata extends VolatileResource {
-    user: User;
+    user: Pointer;
 }
 export interface AuthenticatedUserMetadataFactory {
     TYPE: CS["AuthenticatedUserMetadata"];

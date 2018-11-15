@@ -1,7 +1,11 @@
 import { VolatileResource } from "../LDP";
 import { ObjectSchema } from "../ObjectSchema";
-import { CS } from "../Vocabularies/CS";
-import { XSD } from "../Vocabularies/XSD";
+import { Pointer } from "../Pointer";
+import { TransientResource } from "../Resource";
+import {
+	CS,
+	XSD,
+} from "../Vocabularies";
 
 
 export interface UsernameAndPasswordCredentialsBase {
@@ -9,9 +13,11 @@ export interface UsernameAndPasswordCredentialsBase {
 	password:string;
 }
 
-export interface UsernameAndPasswordCredentials extends VolatileResource {
+export interface UsernameAndPasswordCredentials extends TransientResource {
 	username?:string;
 	password?:string;
+	// TODO: Change to a PasswordSecret
+	passwordSecret?:Pointer;
 }
 
 
@@ -19,9 +25,9 @@ export interface UsernameAndPasswordCredentialsFactory {
 	TYPE:CS[ "UsernameAndPasswordCredentials" ];
 	SCHEMA:ObjectSchema;
 
-	create( data:UsernameAndPasswordCredentialsBase ):UsernameAndPasswordCredentials;
+	create<T extends object>( data:T & UsernameAndPasswordCredentialsBase ):T & UsernameAndPasswordCredentials & VolatileResource;
 
-	createFrom<T extends UsernameAndPasswordCredentialsBase>( object:T ):T & UsernameAndPasswordCredentials;
+	createFrom<T extends object>( object:T & UsernameAndPasswordCredentialsBase ):T & UsernameAndPasswordCredentials & VolatileResource;
 }
 
 const SCHEMA:ObjectSchema = {
@@ -33,17 +39,22 @@ const SCHEMA:ObjectSchema = {
 		"@id": CS.password,
 		"@type": XSD.string,
 	},
+	"passwordSecret": {
+		"@id": CS.passwordSecret,
+		"@type": "@id",
+	},
 };
 
 export const UsernameAndPasswordCredentials:UsernameAndPasswordCredentialsFactory = {
 	TYPE: CS.UsernameAndPasswordCredentials,
 	SCHEMA,
 
-	create( data:UsernameAndPasswordCredentialsBase ):UsernameAndPasswordCredentials {
-		return UsernameAndPasswordCredentials.createFrom( { ...data } );
+	create<T extends object>( data:T & UsernameAndPasswordCredentialsBase ):T & UsernameAndPasswordCredentials & VolatileResource {
+		const copy:T & UsernameAndPasswordCredentialsBase = Object.assign( {}, data );
+		return UsernameAndPasswordCredentials.createFrom( copy );
 	},
 
-	createFrom<T extends UsernameAndPasswordCredentialsBase>( object:T ):T & UsernameAndPasswordCredentials {
+	createFrom<T extends object>( object:T & UsernameAndPasswordCredentialsBase ):T & UsernameAndPasswordCredentials & VolatileResource {
 		const credentials:T & UsernameAndPasswordCredentials = VolatileResource.createFrom<T>( object );
 
 		credentials.addType( UsernameAndPasswordCredentials.TYPE );

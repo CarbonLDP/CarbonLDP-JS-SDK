@@ -27,6 +27,8 @@ describe( module( "carbonldp/Auth/UsernameAndPasswordCredentials" ), ():void => 
 		"Interface that represents the basic properties of a UsernameAndPasswordCredentials."
 	), ():void => {
 
+		it( extendsClass( "CarbonLDP.TransientResource" ), () => {} );
+
 		it( hasProperty(
 			OBLIGATORY,
 			"username",

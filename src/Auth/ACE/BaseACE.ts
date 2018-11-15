@@ -2,8 +2,6 @@ import { Pointer } from "../../Pointer";
 import { BaseResource } from "../../Resource";
 
 export interface BaseACE extends BaseResource {
-	granting:boolean;
+	subject:Pointer;
 	permissions:Pointer[];
-	subjects:Pointer[];
-	subjectsClass:Pointer;
 }

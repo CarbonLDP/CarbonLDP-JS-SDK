@@ -4,6 +4,7 @@ var Errors_1 = require("../Errors");
 var HTTP_1 = require("../HTTP");
 var Errors_2 = require("../HTTP/Errors");
 var JSONLD_1 = require("../JSONLD");
+var ProtectedDocument_1 = require("../ProtectedDocument");
 var Document_1 = require("../RDF/Document");
 var Utils_1 = require("../Utils");
 var LDP_1 = require("../Vocabularies/LDP");
@@ -53,11 +54,12 @@ var Authenticator = (function () {
         }).then(function (_a) {
             var rdfData = _a[0], response = _a[1];
             var accessor = _this._parseRDFMetadata(rdfData, response, requestOptions);
-            _this._authenticatedUser = accessor
+            _this._authenticatedUser = ProtectedDocument_1.ProtectedDocument.decorate(accessor
                 .authenticatedUserMetadata
-                .user;
-            return User_1.User
-                .decorate(_this._authenticatedUser, _this.context.documents);
+                .user, _this.context.documents);
+            _this._authenticatedUser
+                .addType(User_1.User.TYPE);
+            return _this._authenticatedUser;
         });
     };
     Authenticator.prototype._parseRDFMetadata = function (rdfData, response, requestOptions) {

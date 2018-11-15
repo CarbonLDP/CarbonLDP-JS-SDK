@@ -1,19 +1,21 @@
 import { Context } from "../Context";
 import * as Errors from "../Errors";
 import { RequestOptions } from "../HTTP";
+import { Pointer } from "../Pointer";
 import * as Utils from "../Utils";
+import { CS } from "../Vocabularies";
 import { Authenticator } from "./Authenticator";
 import { AuthMethod } from "./AuthMethod";
 import { BasicAuthenticator } from "./BasicAuthenticator";
 import { BasicCredentials } from "./BasicCredentials";
 import { BasicToken } from "./BasicToken";
-import { User } from "./User";
 import * as Roles from "./Roles";
 import { TokenAuthenticator } from "./TokenAuthenticator";
 import {
 	TokenCredentials,
 	TokenCredentialsBase,
 } from "./TokenCredentials";
+import { User } from "./User";
 import { UsersEndpoint } from "./UsersEndpoint";
 
 export class AuthService {
@@ -32,6 +34,18 @@ export class AuthService {
 		return null;
 	}
 
+	public Permission:{
+		READ:Pointer;
+		UPDATE:Pointer;
+		DELETE:Pointer;
+		CREATE_CHILD:Pointer;
+		CREATE_ACCESS_POINT:Pointer;
+		ADD_MEMBER:Pointer;
+		REMOVE_MEMBER:Pointer;
+		CONTROL_ACCESS:Pointer;
+		IMPERSONATE:Pointer;
+	};
+
 	constructor( context:Context ) {
 		this.context = context;
 
@@ -44,6 +58,18 @@ export class AuthService {
 		this.authenticators = {
 			[ AuthMethod.BASIC ]: new BasicAuthenticator( this.context ),
 			[ AuthMethod.TOKEN ]: new TokenAuthenticator( this.context ),
+		};
+
+		this.Permission = {
+			READ: context.documents.getPointer( CS.Read ),
+			UPDATE: context.documents.getPointer( CS.Update ),
+			DELETE: context.documents.getPointer( CS.Delete ),
+			CREATE_CHILD: context.documents.getPointer( CS.CreateChild ),
+			CREATE_ACCESS_POINT: context.documents.getPointer( CS.CreateAccessPoint ),
+			ADD_MEMBER: context.documents.getPointer( CS.AddMember ),
+			REMOVE_MEMBER: context.documents.getPointer( CS.RemoveMember ),
+			CONTROL_ACCESS: context.documents.getPointer( CS.ControlAccess ),
+			IMPERSONATE: context.documents.getPointer( CS.Impersonate ),
 		};
 	}
 

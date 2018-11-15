@@ -5,15 +5,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Auth = __importStar(require("./Auth"));
+var Auth_1 = require("./Auth");
 var ACE_1 = require("./Auth/ACE");
 var ACL_1 = require("./Auth/ACL");
 var AuthenticatedUserInformationAccessor_1 = require("./Auth/AuthenticatedUserInformationAccessor");
 var AuthenticatedUserMetadata_1 = require("./Auth/AuthenticatedUserMetadata");
-var CredentialsSet_1 = require("./Auth/CredentialsSet");
+var CredentialSet_1 = require("./Auth/CredentialSet");
 var LDAPCredentials_1 = require("./Auth/LDAPCredentials");
+var PasswordSecret_1 = require("./Auth/PasswordSecret");
 var TokenCredentials_1 = require("./Auth/TokenCredentials");
 var User_1 = require("./Auth/User");
 var UsernameAndPasswordCredentials_1 = require("./Auth/UsernameAndPasswordCredentials");
@@ -192,9 +194,16 @@ var SDKContext = (function () {
         this.extendObjectSchema(AuthenticatedUserMetadata_1.AuthenticatedUserMetadata.TYPE, AuthenticatedUserMetadata_1.AuthenticatedUserMetadata.SCHEMA);
         this.extendObjectSchema(User_1.User.TYPE, User_1.User.SCHEMA);
         this.extendObjectSchema(TokenCredentials_1.TokenCredentials.TYPE, TokenCredentials_1.TokenCredentials.SCHEMA);
-        this.extendObjectSchema(CredentialsSet_1.CredentialsSet.TYPE, CredentialsSet_1.CredentialsSet.SCHEMA);
+        this.extendObjectSchema(CredentialSet_1.CredentialSet.TYPE, CredentialSet_1.CredentialSet.SCHEMA);
         this.extendObjectSchema(UsernameAndPasswordCredentials_1.UsernameAndPasswordCredentials.TYPE, UsernameAndPasswordCredentials_1.UsernameAndPasswordCredentials.SCHEMA);
         this.extendObjectSchema(LDAPCredentials_1.LDAPCredentials.TYPE, LDAPCredentials_1.LDAPCredentials.SCHEMA);
+        this.extendObjectSchema(PasswordSecret_1.PasswordSecret.TYPE, PasswordSecret_1.PasswordSecret.SCHEMA);
+        this.extendObjectSchema(Auth_1.SimpleUserACReport.TYPE, Auth_1.SimpleUserACReport.SCHEMA);
+        this.extendObjectSchema(Auth_1.DetailedUserACReport.TYPE, Auth_1.DetailedUserACReport.SCHEMA);
+        this.extendObjectSchema(Auth_1.PermissionReport.TYPE, Auth_1.PermissionReport.SCHEMA);
+        this.extendObjectSchema(Auth_1.GrantingStep.TYPE, Auth_1.GrantingStep.SCHEMA);
+        this.extendObjectSchema(Auth_1.CompleteACReport.TYPE, Auth_1.CompleteACReport.SCHEMA);
+        this.extendObjectSchema(Auth_1.SubjectReport.TYPE, Auth_1.SubjectReport.SCHEMA);
         this.extendObjectSchema(ValidationReport_1.ValidationReport.TYPE, ValidationReport_1.ValidationReport.SCHEMA);
         this.extendObjectSchema(ValidationResult_1.ValidationResult.TYPE, ValidationResult_1.ValidationResult.SCHEMA);
         this.extendObjectSchema(QueryMetadata_1.QueryMetadata.TYPE, QueryMetadata_1.QueryMetadata.SCHEMA);

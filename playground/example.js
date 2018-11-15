@@ -417,42 +417,6 @@
 				console.log( users );
 			} );
 
-			it( "should change username", async () => {
-				user.updateCredentials( "another-user" );
-				await user.saveAndRefresh();
-
-				await app.auth.authenticate( "another-user", "pass02" );
-
-				user.updateCredentials( "user02" );
-				await user.save();
-
-				expect().nothing();
-			} );
-
-			it( "should change password", async () => {
-				user.updateCredentials( null, "another-pass" );
-				await user.saveAndRefresh();
-
-				await app.auth.authenticate( "user02", "another-pass" );
-
-				user.updateCredentials( null, "pass02" );
-				await user.save();
-
-				expect().nothing();
-			} );
-
-			it( "should change username & password", async () => {
-				user.updateCredentials( "another-user", "another-pass" );
-				await user.saveAndRefresh();
-
-				await app.auth.authenticate( "another-user", "another-pass" );
-
-				user.updateCredentials( "user02", "pass02" );
-				await user.save();
-
-				expect().nothing();
-			} );
-
 			afterAll( async () => {
 				if( ! user ) return;
 				await app.documents.delete( user.id );

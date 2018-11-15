@@ -6,8 +6,7 @@ import {
 
 import { Context } from "../Context";
 import { IllegalArgumentError } from "../Errors";
-import { RequestOptions } from "../HTTP/Request";
-import { Document } from "../Document";
+import { RequestOptions } from "../HTTP";
 import {
 	clazz,
 	constructor,
@@ -17,21 +16,26 @@ import {
 	INSTANCE,
 	isDefined,
 	method,
-	module
+	module,
+	property
 } from "../test/JasmineExtender";
 import * as Utils from "../Utils";
-import { C } from "../Vocabularies/C";
-import { CS } from "../Vocabularies/CS";
-import { XSD } from "../Vocabularies/XSD";
+import {
+	C,
+	CS,
+	XSD,
+} from "../Vocabularies";
 import { Authenticator } from "./Authenticator";
 import { AuthMethod } from "./AuthMethod";
-import { User } from "./User";
 import * as Roles from "./Roles";
 
 import { AuthService } from "./Service";
 
 import { TokenCredentials } from "./TokenCredentials";
-import { TransientUser } from "./User";
+import {
+	TransientUser,
+	User,
+} from "./User";
 import { UsersEndpoint } from "./UsersEndpoint";
 
 
@@ -82,7 +86,6 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 
 		} );
 
-		// TODO: Move to constructor tests
 		it( hasProperty(
 			INSTANCE,
 			"users",
@@ -154,6 +157,93 @@ describe( module( "carbonldp/Auth/Service" ), ():void => {
 			expect( auth.roles ).toBeDefined();
 			expect( auth.roles ).toEqual( jasmine.any( Roles.Class ) );
 		} );
+
+
+		describe( property(
+			INSTANCE,
+			"Permission",
+			"{ " +
+			"READ: CarbonLDP.Pointer;\n" +
+			"UPDATE: CarbonLDP.Pointer;\n" +
+			"DELETE: CarbonLDP.Pointer;\n" +
+			"CREATE_CHILD: CarbonLDP.Pointer;\n" +
+			"CREATE_ACCESS_POINT: CarbonLDP.Pointer;\n" +
+			"ADD_MEMBER: CarbonLDP.Pointer;\n" +
+			"REMOVE_MEMBER: CarbonLDP.Pointer;\n" +
+			"CONTROL_ACCESS: CarbonLDP.Pointer;\n" +
+			"IMPERSONATE: CarbonLDP.Pointer;\n" +
+			" }",
+			"Object that contains the available permissions for the platform."
+		), () => {
+
+			let auth:AuthService;
+			beforeEach( ():void => {
+				context = createMockContext();
+				auth = new AuthService( context );
+			} );
+
+			it( "should exists", ():void => {
+				expect( auth.Permission ).toBeDefined();
+				expect( auth.Permission ).toEqual( jasmine.any( Object ) );
+			} );
+
+
+			it( "should to have cs:Read", () => {
+				expect( auth.Permission.READ ).toEqual( jasmine.objectContaining( {
+					id: CS.Read,
+				} ) );
+			} );
+
+			it( "should to have cs:Update", () => {
+				expect( auth.Permission.UPDATE ).toEqual( jasmine.objectContaining( {
+					id: CS.Update,
+				} ) );
+			} );
+
+			it( "should to have cs:Delete", () => {
+				expect( auth.Permission.DELETE ).toEqual( jasmine.objectContaining( {
+					id: CS.Delete,
+				} ) );
+			} );
+
+			it( "should to have cs:CreateChild", () => {
+				expect( auth.Permission.CREATE_CHILD ).toEqual( jasmine.objectContaining( {
+					id: CS.CreateChild,
+				} ) );
+			} );
+
+			it( "should to have cs:CreateAccessPoint", () => {
+				expect( auth.Permission.CREATE_ACCESS_POINT ).toEqual( jasmine.objectContaining( {
+					id: CS.CreateAccessPoint,
+				} ) );
+			} );
+
+			it( "should to have cs:AddMember", () => {
+				expect( auth.Permission.ADD_MEMBER ).toEqual( jasmine.objectContaining( {
+					id: CS.AddMember,
+				} ) );
+			} );
+
+			it( "should to have cs:RemoveMember", () => {
+				expect( auth.Permission.REMOVE_MEMBER ).toEqual( jasmine.objectContaining( {
+					id: CS.RemoveMember,
+				} ) );
+			} );
+
+			it( "should to have cs:ControlAccess", () => {
+				expect( auth.Permission.CONTROL_ACCESS ).toEqual( jasmine.objectContaining( {
+					id: CS.ControlAccess,
+				} ) );
+			} );
+
+			it( "should to have cs:Impersonate", () => {
+				expect( auth.Permission.IMPERSONATE ).toEqual( jasmine.objectContaining( {
+					id: CS.Impersonate,
+				} ) );
+			} );
+
+		} );
+
 
 		// TODO: Separate in different tests
 		it( hasMethod(

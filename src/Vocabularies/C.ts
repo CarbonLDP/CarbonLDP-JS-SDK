@@ -27,6 +27,7 @@ export interface C {
 	PreferDocumentETags:"https://carbonldp.com/ns/v1/platform#PreferDocumentETags";
 	PreferMembershipResources:"https://carbonldp.com/ns/v1/platform#PreferMembershipResources";
 	PreferMembershipTriples:"https://carbonldp.com/ns/v1/platform#PreferMembershipTriples";
+	PreferMinimalDocument:"https://carbonldp.com/ns/v1/platform#PreferMinimalDocument";
 	PreferResultsContext:"https://carbonldp.com/ns/v1/platform#PreferResultsContext";
 	PreferSelectedMembershipTriples:"https://carbonldp.com/ns/v1/platform#PreferSelectedMembershipTriples";
 	QueryMetadata:"https://carbonldp.com/ns/v1/platform#QueryMetadata";
@@ -94,6 +95,7 @@ export const C:C = {
 	PreferDocumentETags: "https://carbonldp.com/ns/v1/platform#PreferDocumentETags",
 	PreferMembershipResources: "https://carbonldp.com/ns/v1/platform#PreferMembershipResources",
 	PreferMembershipTriples: "https://carbonldp.com/ns/v1/platform#PreferMembershipTriples",
+	PreferMinimalDocument: "https://carbonldp.com/ns/v1/platform#PreferMinimalDocument",
 	PreferResultsContext: "https://carbonldp.com/ns/v1/platform#PreferResultsContext",
 	PreferSelectedMembershipTriples: "https://carbonldp.com/ns/v1/platform#PreferSelectedMembershipTriples",
 	QueryMetadata: "https://carbonldp.com/ns/v1/platform#QueryMetadata",

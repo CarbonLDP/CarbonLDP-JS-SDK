@@ -1,61 +1,53 @@
 import { ModelSchema } from "../../core/ModelSchema";
-import { Fragment } from "../../Fragment";
+import { TransientFragment } from "../../Fragment";
 import { ObjectSchema } from "../../ObjectSchema";
-import {
-	CS,
-	XSD
-} from "../../Vocabularies";
-import { ACL } from "../ACL";
-import {
-	TransientACE,
-	TransientACEFactory
-} from "./TransientACE";
+import { Pointer } from "../../Pointer";
+import { TransientResource } from "../../Resource";
+import { CS } from "../../Vocabularies";
+import { BaseACE } from "./BaseACE";
 
 
-export interface ACE extends TransientACE, Fragment {
-	_document:ACL;
+export interface ACE extends TransientResource {
+	subject:Pointer;
+	permissions:Pointer[];
 }
 
 
-export interface ACEFactory extends ModelSchema, TransientACEFactory {
+export interface ACEFactory extends ModelSchema {
 	TYPE:CS[ "AccessControlEntry" ];
 	SCHEMA:ObjectSchema;
 
 
-	is( value:any ):value is ACE;
+	create<T extends object>( data:T & BaseACE ):T & ACE;
+
+	createFrom<T extends object>( object:T & BaseACE ):T & ACE;
 }
 
 export const ACE:ACEFactory = {
-	TYPE: TransientACE.TYPE,
+	TYPE: CS.AccessControlEntry,
 	SCHEMA: {
-		"granting": {
-			"@id": CS.granting,
-			"@type": XSD.boolean,
-		},
 		"permissions": {
 			"@id": CS.permission,
 			"@type": "@id",
 			"@container": "@set",
 		},
-		"subjects": {
+		"subject": {
 			"@id": CS.subject,
 			"@type": "@id",
-			"@container": "@set",
-		},
-		"subjectsClass": {
-			"@id": CS.subjectClass,
-			"@type": "@id",
 		},
 	},
 
 
-	is( value:any ):value is ACE {
-		return Fragment.is( value )
-			&& value.hasType( ACE.TYPE )
-			;
+	create<T extends object>( data:T & BaseACE ):T & ACE {
+		const copy:T & BaseACE = Object.assign( {}, data );
+		return ACE.createFrom( copy );
 	},
 
+	createFrom<T extends object>( object:T & BaseACE ):T & ACE {
+		const ace:T & ACE = TransientFragment.decorate( object );
 
-	create: TransientACE.create,
-	createFrom: TransientACE.createFrom,
+		ace.addType( ACE.TYPE );
+
+		return ace;
+	},
 };

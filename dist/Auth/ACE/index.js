@@ -4,6 +4,5 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./ACE"));
-__export(require("./TransientACE"));
 
 //# sourceMappingURL=index.js.map

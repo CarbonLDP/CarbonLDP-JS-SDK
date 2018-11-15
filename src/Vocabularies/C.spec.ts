@@ -261,6 +261,15 @@ describe( module( "carbonldp/Vocabularies/C" ), ():void => {
 
 		it( hasProperty(
 			OBLIGATORY,
+			"PreferMinimalDocument",
+			"https://carbonldp.com/ns/v1/platform#PreferMinimalDocument"
+		), ():void => {
+			const target:C[ "PreferMinimalDocument" ] = "https://carbonldp.com/ns/v1/platform#PreferMinimalDocument";
+			expect( target ).toBeDefined();
+		} );
+
+		it( hasProperty(
+			OBLIGATORY,
 			"PreferResultsContext",
 			"https://carbonldp.com/ns/v1/platform#PreferResultsContext"
 		), ():void => {
@@ -581,7 +590,7 @@ describe( module( "carbonldp/Vocabularies/C" ), ():void => {
 		} );
 
 		it( "should test all exported IRIs", ():void => {
-			expect( Object.keys( C ).length ).toBe( 62 );
+			expect( Object.keys( C ).length ).toBe( 63 );
 		} );
 
 		it( "C.namespace", ():void => {
@@ -717,6 +726,11 @@ describe( module( "carbonldp/Vocabularies/C" ), ():void => {
 		it( "C.PreferMembershipTriples", ():void => {
 			expect( C.PreferMembershipTriples ).toEqual( jasmine.any( String ) );
 			expect( C.PreferMembershipTriples ).toBe( "https://carbonldp.com/ns/v1/platform#PreferMembershipTriples" );
+		} );
+
+		it( "C.PreferMinimalDocument", ():void => {
+			expect( C.PreferMinimalDocument ).toEqual( jasmine.any( String ) );
+			expect( C.PreferMinimalDocument ).toBe( "https://carbonldp.com/ns/v1/platform#PreferMinimalDocument" );
 		} );
 
 		it( "C.PreferResultsContext", ():void => {

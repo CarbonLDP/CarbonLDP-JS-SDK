@@ -14,6 +14,7 @@ var QueryDocumentBuilder = (function () {
     function QueryDocumentBuilder(queryContext, property) {
         this.inherit = INHERIT;
         this.all = QueryDocumentBuilder.ALL;
+        this.full = QueryDocumentBuilder.FULL;
         this._context = queryContext;
         property._builder = this;
         this._document = property;
@@ -66,6 +67,10 @@ var QueryDocumentBuilder = (function () {
     QueryDocumentBuilder.prototype.properties = function (propertiesSchema) {
         if (propertiesSchema === QueryDocumentBuilder.ALL) {
             this._document.setType(QueryProperty_1.QueryPropertyType.ALL);
+            return this;
+        }
+        if (propertiesSchema === QueryDocumentBuilder.FULL) {
+            this._document.setType(QueryProperty_1.QueryPropertyType.FULL);
             return this;
         }
         for (var propertyName in propertiesSchema) {
@@ -140,6 +145,7 @@ var QueryDocumentBuilder = (function () {
         return digestedDefinition;
     };
     QueryDocumentBuilder.ALL = Object.freeze({});
+    QueryDocumentBuilder.FULL = Object.freeze({});
     return QueryDocumentBuilder;
 }());
 exports.QueryDocumentBuilder = QueryDocumentBuilder;

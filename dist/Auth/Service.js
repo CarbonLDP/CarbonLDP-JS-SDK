@@ -5,10 +5,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
     result["default"] = mod;
     return result;
-}
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Errors = __importStar(require("../Errors"));
 var Utils = __importStar(require("../Utils"));
+var Vocabularies_1 = require("../Vocabularies");
 var AuthMethod_1 = require("./AuthMethod");
 var BasicAuthenticator_1 = require("./BasicAuthenticator");
 var BasicToken_1 = require("./BasicToken");
@@ -27,6 +28,17 @@ var AuthService = (function () {
             _a[AuthMethod_1.AuthMethod.BASIC] = new BasicAuthenticator_1.BasicAuthenticator(this.context),
             _a[AuthMethod_1.AuthMethod.TOKEN] = new TokenAuthenticator_1.TokenAuthenticator(this.context),
             _a);
+        this.Permission = {
+            READ: context.documents.getPointer(Vocabularies_1.CS.Read),
+            UPDATE: context.documents.getPointer(Vocabularies_1.CS.Update),
+            DELETE: context.documents.getPointer(Vocabularies_1.CS.Delete),
+            CREATE_CHILD: context.documents.getPointer(Vocabularies_1.CS.CreateChild),
+            CREATE_ACCESS_POINT: context.documents.getPointer(Vocabularies_1.CS.CreateAccessPoint),
+            ADD_MEMBER: context.documents.getPointer(Vocabularies_1.CS.AddMember),
+            REMOVE_MEMBER: context.documents.getPointer(Vocabularies_1.CS.RemoveMember),
+            CONTROL_ACCESS: context.documents.getPointer(Vocabularies_1.CS.ControlAccess),
+            IMPERSONATE: context.documents.getPointer(Vocabularies_1.CS.Impersonate),
+        };
         var _a;
     }
     Object.defineProperty(AuthService.prototype, "authenticatedUser", {

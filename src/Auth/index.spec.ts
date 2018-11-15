@@ -8,8 +8,15 @@ import * as Utils from "../Utils";
 
 import * as Auth from "./";
 
-import { TransientACE } from "./ACE";
-import { TransientACL } from "./ACL";
+import {
+	ACE,
+	BaseACE,
+} from "./ACE";
+import {
+	ACL,
+	BaseACL,
+	TransientACL,
+} from "./ACL";
 import { AuthenticatedUserInformationAccessor } from "./AuthenticatedUserInformationAccessor";
 import { AuthenticatedUserMetadata } from "./AuthenticatedUserMetadata";
 import { Authenticator } from "./Authenticator";
@@ -17,38 +24,37 @@ import { AuthMethod } from "./AuthMethod";
 import { BasicAuthenticator } from "./BasicAuthenticator";
 import { BasicCredentials } from "./BasicCredentials";
 import { BasicToken } from "./BasicToken";
-import { CredentialsSet } from "./CredentialsSet";
+import { CompleteACReport } from "./CompleteACReport";
+import { CredentialSet } from "./CredentialSet";
+import { DetailedUserACReport } from "./DetailedUserACReport";
+import { GrantingStep } from "./GrantingStep";
 import { LDAPCredentials } from "./LDAPCredentials";
-import { ACE } from "./ACE";
-import { ACL } from "./ACL";
+import { PasswordSecret } from "./PasswordSecret";
+import { PermissionReport } from "./PermissionReport";
 import * as PersistedRole from "./PersistedRole";
-import { User } from "./User";
 import * as Role from "./Role";
 import * as Roles from "./Roles";
 import { AuthService } from "./Service";
+import { SimpleUserACReport } from "./SimpleUserACReport";
+import { SubjectReport } from "./SubjectReport";
 import { TokenAuthenticator } from "./TokenAuthenticator";
 import {
 	TokenCredentials,
 	TokenCredentialsBase,
 } from "./TokenCredentials";
-import { TransientUser } from "./User";
+import {
+	TransientUser,
+	User,
+} from "./User";
 import { UsernameAndPasswordCredentials } from "./UsernameAndPasswordCredentials";
 import { UsersEndpoint } from "./UsersEndpoint";
+
 
 describe( module( "carbonldp/Auth" ), ():void => {
 
 	it( isDefined(), ():void => {
 		expect( Auth ).toBeDefined();
 		expect( Utils.isObject( Auth ) ).toBe( true );
-	} );
-
-	it( reexports(
-		STATIC,
-		"TransientACE",
-		"CarbonLDP.Auth.TransientACE"
-	), ():void => {
-		expect( Auth.TransientACE ).toBeDefined();
-		expect( Auth.TransientACE ).toBe( TransientACE );
 	} );
 
 	it( reexports(
@@ -153,10 +159,10 @@ describe( module( "carbonldp/Auth" ), ():void => {
 	it( reexports(
 		STATIC,
 		"CredentialsSet",
-		"CarbonLDP.Auth.CredentialsSet"
+		"CarbonLDP.Auth.CredentialSet"
 	), ():void => {
-		expect( Auth.CredentialsSet ).toBeDefined();
-		expect( Auth.CredentialsSet ).toBe( CredentialsSet );
+		expect( Auth.CredentialSet ).toBeDefined();
+		expect( Auth.CredentialSet ).toBe( CredentialSet );
 	} );
 
 	it( reexports(
@@ -179,6 +185,15 @@ describe( module( "carbonldp/Auth" ), ():void => {
 
 	it( reexports(
 		STATIC,
+		"BaseACE",
+		"CarbonLDP.Auth.BaseACE"
+	), ():void => {
+		const target:Auth.BaseACE = {} as BaseACE;
+		expect( target ).toBeDefined();
+	} );
+
+	it( reexports(
+		STATIC,
 		"ACL",
 		"CarbonLDP.Auth.ACL"
 	), ():void => {
@@ -188,11 +203,29 @@ describe( module( "carbonldp/Auth" ), ():void => {
 
 	it( reexports(
 		STATIC,
+		"BaseACL",
+		"CarbonLDP.Auth.BaseACL"
+	), ():void => {
+		const target:Auth.BaseACL = {} as BaseACL;
+		expect( target ).toBeDefined();
+	} );
+
+	it( reexports(
+		STATIC,
 		"User",
 		"CarbonLDP.Auth.User"
 	), ():void => {
 		expect( Auth.User ).toBeDefined();
 		expect( Auth.User ).toBe( User );
+	} );
+
+	it( reexports(
+		STATIC,
+		"PasswordSecret",
+		"CarbonLDP.Auth.PasswordSecret"
+	), ():void => {
+		expect( Auth.PasswordSecret ).toBeDefined();
+		expect( Auth.PasswordSecret ).toBe( PasswordSecret );
 	} );
 
 	it( reexports(
@@ -256,6 +289,60 @@ describe( module( "carbonldp/Auth" ), ():void => {
 	), ():void => {
 		expect( Auth.UsernameAndPasswordCredentials ).toBeDefined();
 		expect( Auth.UsernameAndPasswordCredentials ).toBe( UsernameAndPasswordCredentials );
+	} );
+
+	it( reexports(
+		STATIC,
+		"SimpleUserACReport",
+		"CarbonLDP.Auth.SimpleUserACReport"
+	), ():void => {
+		expect( Auth.SimpleUserACReport ).toBeDefined();
+		expect( Auth.SimpleUserACReport ).toBe( SimpleUserACReport );
+	} );
+
+	it( reexports(
+		STATIC,
+		"DetailedUserACReport",
+		"CarbonLDP.Auth.DetailedUserACReport"
+	), ():void => {
+		expect( Auth.DetailedUserACReport ).toBeDefined();
+		expect( Auth.DetailedUserACReport ).toBe( DetailedUserACReport );
+	} );
+
+	it( reexports(
+		STATIC,
+		"PermissionReport",
+		"CarbonLDP.Auth.PermissionReport"
+	), ():void => {
+		expect( Auth.PermissionReport ).toBeDefined();
+		expect( Auth.PermissionReport ).toBe( PermissionReport );
+	} );
+
+	it( reexports(
+		STATIC,
+		"GrantingStep",
+		"CarbonLDP.Auth.GrantingStep"
+	), ():void => {
+		expect( Auth.GrantingStep ).toBeDefined();
+		expect( Auth.GrantingStep ).toBe( GrantingStep );
+	} );
+
+	it( reexports(
+		STATIC,
+		"CompleteACReport",
+		"CarbonLDP.Auth.CompleteACReport"
+	), ():void => {
+		expect( Auth.CompleteACReport ).toBeDefined();
+		expect( Auth.CompleteACReport ).toBe( CompleteACReport );
+	} );
+
+	it( reexports(
+		STATIC,
+		"SubjectReport",
+		"CarbonLDP.Auth.SubjectReport"
+	), ():void => {
+		expect( Auth.SubjectReport ).toBeDefined();
+		expect( Auth.SubjectReport ).toBe( SubjectReport );
 	} );
 
 } );

@@ -38,9 +38,11 @@ const INHERIT:Readonly<{}> = Object.freeze( {} );
 
 export class QueryDocumentBuilder {
 	static readonly ALL:Readonly<{}> = Object.freeze( {} );
+	static readonly FULL:Readonly<{}> = Object.freeze( {} );
 
 	inherit:Readonly<{}> = INHERIT;
 	all:Readonly<{}> = QueryDocumentBuilder.ALL;
+	full:Readonly<{}> = QueryDocumentBuilder.FULL;
 
 	readonly _context:QueryContextBuilder;
 
@@ -121,6 +123,11 @@ export class QueryDocumentBuilder {
 			return this;
 		}
 
+		if( propertiesSchema === QueryDocumentBuilder.FULL ) {
+			this._document.setType( QueryPropertyType.FULL );
+			return this;
+		}
+
 		for( const propertyName in propertiesSchema ) {
 			const queryPropertySchema:QuerySchemaProperty | string = propertiesSchema[ propertyName ];
 			const propertyDefinition:QuerySchemaProperty = isObject( queryPropertySchema ) ? queryPropertySchema : { "@id": queryPropertySchema };
@@ -140,8 +147,8 @@ export class QueryDocumentBuilder {
 		return this;
 	}
 
-	values( ...values:( QueryValue | QueryObject )[] ):this {
-		const termTokens:( LiteralToken | IRIToken | PrefixedNameToken )[] = values.map( value => {
+	values( ...values:(QueryValue | QueryObject)[] ):this {
+		const termTokens:(LiteralToken | IRIToken | PrefixedNameToken)[] = values.map( value => {
 			const token:TermToken = value.getToken();
 			if( token.token === "blankNode" ) throw new IllegalArgumentError( `Blank node "${ token.label }" is not a valid value.` );
 

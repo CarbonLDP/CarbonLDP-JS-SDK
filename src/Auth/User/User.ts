@@ -1,11 +1,9 @@
-import { Documents } from "../../Documents";
 import { ObjectSchema } from "../../ObjectSchema";
 import { ProtectedDocument } from "../../ProtectedDocument";
 import {
 	CS,
 	XSD
 } from "../../Vocabularies";
-import { UsernameAndPasswordCredentials } from "../UsernameAndPasswordCredentials";
 import {
 	TransientUser,
 	TransientUserFactory
@@ -14,9 +12,6 @@ import {
 
 export interface User extends ProtectedDocument {
 	name?:string;
-	credentials?:UsernameAndPasswordCredentials;
-
-	updateCredentials( username?:string, password?:string ):UsernameAndPasswordCredentials;
 }
 
 
@@ -25,11 +20,6 @@ export interface UserFactory extends TransientUserFactory {
 	SCHEMA:ObjectSchema;
 
 	is( value:any ):value is User;
-
-	isDecorated( object:object ):object is User;
-
-
-	decorate<T extends object>( object:T, documents:Documents ):User & T;
 }
 
 
@@ -44,31 +34,19 @@ export const User:UserFactory = {
 			"@id": CS.credentials,
 			"@type": "@id",
 		},
+		"credentialSet": {
+			"@id": CS.credentialSet,
+			"@type": "@id",
+		},
 	},
 
-
-	isDecorated( object:object ):object is User {
-		return ProtectedDocument.isDecorated( object )
-			&& TransientUser.isDecorated( object )
-			;
-	},
 
 	is( value:any ):value is User {
-		return TransientUser.isDecorated( value )
-			&& ProtectedDocument.is( value )
+		return ProtectedDocument.is( value )
+			&& value.hasType( User.TYPE )
 			;
 	},
 
-
-	decorate<T extends object>( object:T, documents:Documents ):User & T {
-		TransientUser.decorate( object );
-		ProtectedDocument.decorate( object, documents );
-
-		const persistedUser:T & User = object as T & User;
-		persistedUser.addType( TransientUser.TYPE );
-
-		return persistedUser;
-	},
 
 	create: TransientUser.create,
 	createFrom: TransientUser.createFrom,
