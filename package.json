@@ -38,7 +38,7 @@
     "@types/nock": "^8.2.1",
     "@types/sockjs-client": "^1.1.0",
     "carbonldp-ts-docs-engine": "^1.0.0",
-    "codecov": "^3.2.0",
+    "codecov": "^3.7.1",
     "core-js-bundle": "^3.0.0",
     "del": "^3.0.0",
     "gulp": "^4.0.0",
